@@ -54,7 +54,6 @@ public class AuthServiceImpl implements AuthService {
 
         return AuthResponse.builder()
                 .userId(user.getId())
-                .role(user.getRole())
                 .accessToken(accessToken)
                 .refreshToken(refreshTokenEntity.getToken())
                 .build();
@@ -76,7 +75,7 @@ public class AuthServiceImpl implements AuthService {
         }
 
         RefreshToken refreshTokenEntity =
-                refreshTokenService.create(user.getId());
+                refreshTokenService.findValidByUser(user.getId());
 
         String accessToken = jwtUtil.generateAccessToken(
                 user.getId(),
@@ -86,7 +85,6 @@ public class AuthServiceImpl implements AuthService {
 
         return AuthResponse.builder()
                 .userId(user.getId())
-                .role(user.getRole())
                 .accessToken(accessToken)
                 .refreshToken(refreshTokenEntity.getToken())
                 .build();
@@ -106,7 +104,6 @@ public class AuthServiceImpl implements AuthService {
 
         return AuthResponse.builder()
                 .userId(user.getId())
-                .role(user.getRole())
                 .accessToken(accessToken)
                 .refreshToken(refreshToken)
                 .build();

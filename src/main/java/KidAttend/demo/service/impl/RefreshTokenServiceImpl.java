@@ -18,15 +18,13 @@ import java.util.UUID;
 
 @RequiredArgsConstructor
 @Service
-@Log4j2
 public class RefreshTokenServiceImpl implements RefreshTokenService {
 
     private final JwtUtil jwtUtil;
     private final RefreshTokenRepository refreshTokenRepository;
     private final UserServiceDomain userServiceDomain;
-
-    @Value("${jwt.refresh-expiration-days}")
-    private long refreshExpirationDays;
+    @Value("${jwt.refresh-expiration-ms}")
+    private long refreshExpirationMs;
 
     // ================= CREATE =================
     @Override
@@ -37,14 +35,11 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
         RefreshToken refreshToken = RefreshToken.builder()
                 .token(UUID.randomUUID().toString())
                 .user(user)
-                .expiredAt(LocalDateTime.now().plusDays(refreshExpirationDays))
+                .expiredAt(LocalDateTime.now().plusNanos(refreshExpirationMs * 1_000_000))
                 .revoked(false)
                 .build();
 
         RefreshToken saved = refreshTokenRepository.save(refreshToken);
-
-        log.info("AUTH_EVENT | action=REFRESH_TOKEN_CREATED | userId={} | tokenId={}",
-                user.getId(), saved.getId());
 
         return saved;
     }
@@ -85,8 +80,6 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
                         LocalDateTime.now()
                 )
                 .map(token -> {
-                    log.info("AUTH_EVENT | action=REFRESH_TOKEN_REUSE | userId={} | tokenId={}",
-                            userId, token.getId());
                     return token;
                 })
                 .orElseGet(() -> create(userId));
@@ -106,9 +99,6 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
                 user.getRole()
         );
 
-        log.info("AUTH_EVENT | action=ACCESS_TOKEN_REFRESH | userId={} | tokenId={}",
-                user.getId(), token.getId());
-
         return accessToken;
     }
 
@@ -123,8 +113,5 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
 
         refreshTokenRepository.save(token);
 
-        log.info("AUTH_EVENT | action=REFRESH_TOKEN_REVOKED | userId={} | tokenId={}",
-                token.getUser().getId(),
-                token.getId());
     }
 }
