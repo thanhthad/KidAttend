@@ -3,30 +3,36 @@ package KidAttend.demo.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
 
 @Entity
-@Table(name = "attendance_settings")
+@Table(name = "leave_requests")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class AttendanceSetting {
+public class LeaveRequest {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private LocalTime startTime;
+    @ManyToOne
+    @JoinColumn(name = "student_id")
+    private Student student;
 
-    private LocalTime endTime;
+    private LocalDate startDate;
 
-    private Integer allowLateMinutes;
+    private LocalDate endDate;
+
+    private String reason;
+
+    private String status;
 
     @ManyToOne
-    @JoinColumn(name = "created_by")
-    private User createdBy;
+    @JoinColumn(name = "approved_by")
+    private User approvedBy;
 
     private LocalDateTime createdAt;
 

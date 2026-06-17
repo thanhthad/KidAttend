@@ -1,8 +1,10 @@
 package KidAttend.demo.entity;
+
 import jakarta.persistence.*;
 import lombok.*;
-import java.time.LocalDateTime;
+
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "students")
@@ -14,7 +16,7 @@ public class Student {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer id;
+    private Long id;
 
     @ManyToOne
     @JoinColumn(name = "class_id")
@@ -22,17 +24,31 @@ public class Student {
 
     private String fullName;
 
-    private LocalDate dob;
-
     private String gender;
 
-    @Enumerated(EnumType.STRING)
-    private Status status;
+    private LocalDate dateOfBirth;
 
-    private LocalDateTime createdAt = LocalDateTime.now();
+    private String parentName;
 
-    public enum Status {
-        ACTIVE,
-        INACTIVE
+    private String parentPhone;
+
+    private String parentEmail;
+
+    private String address;
+
+    private String status;
+
+    private LocalDateTime createdAt;
+
+    private LocalDateTime updatedAt;
+
+    @PrePersist
+    public void prePersist() {
+        this.createdAt = LocalDateTime.now();
+    }
+
+    @PreUpdate
+    public void preUpdate() {
+        this.updatedAt = LocalDateTime.now();
     }
 }

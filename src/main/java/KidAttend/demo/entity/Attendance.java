@@ -2,6 +2,7 @@ package KidAttend.demo.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
@@ -20,32 +21,33 @@ public class Attendance {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer id;
+    private Long id;
 
     @ManyToOne
     @JoinColumn(name = "student_id")
     private Student student;
 
-    @ManyToOne
-    @JoinColumn(name = "class_id")
-    private ClassEntity classEntity;
-
     private LocalDate attendanceDate;
 
-    @Enumerated(EnumType.STRING)
-    private Status status;
+    private String status;
 
-    private LocalDateTime checkTime;
+    private String note;
 
     @ManyToOne
     @JoinColumn(name = "created_by")
     private User createdBy;
 
-    private LocalDateTime createdAt = LocalDateTime.now();
+    private LocalDateTime createdAt;
 
-    public enum Status {
-        PRESENT,
-        ABSENT,
-        LATE
+    private LocalDateTime updatedAt;
+
+    @PrePersist
+    public void prePersist() {
+        this.createdAt = LocalDateTime.now();
+    }
+
+    @PreUpdate
+    public void preUpdate() {
+        this.updatedAt = LocalDateTime.now();
     }
 }

@@ -2,6 +2,7 @@ package KidAttend.demo.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+
 import java.time.LocalDateTime;
 
 @Entity
@@ -14,25 +15,31 @@ public class User {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer id;
+    private Long id;
 
-    @Column(unique = true, nullable = false)
-    private String username;
-
-    @Column(nullable = false)
     private String password;
 
     private String fullName;
 
     private String phone;
 
-    @Enumerated(EnumType.STRING)
-    private Role role;
+    private String email;
 
-    private LocalDateTime createdAt = LocalDateTime.now();
+    private String role;
 
-    public enum Role {
-        TEACHER,
-        PRINCIPAL
+    private String status;
+
+    private LocalDateTime createdAt;
+
+    private LocalDateTime updatedAt;
+
+    @PrePersist
+    public void prePersist() {
+        this.createdAt = LocalDateTime.now();
+    }
+
+    @PreUpdate
+    public void preUpdate() {
+        this.updatedAt = LocalDateTime.now();
     }
 }
