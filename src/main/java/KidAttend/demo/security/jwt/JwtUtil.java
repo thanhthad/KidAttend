@@ -26,13 +26,11 @@ public class JwtUtil {
 
     // ===== GENERATE TOKEN =====
     public String generateAccessToken(Long userId,
-                                      String fullName,
                                       String email,
                                       String role) {
 
         return Jwts.builder()
                 .setSubject(String.valueOf(userId))
-                .claim("fullName", fullName)
                 .claim("email", email)
                 .claim("role", role)
                 .setIssuedAt(new Date())
