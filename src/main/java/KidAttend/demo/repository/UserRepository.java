@@ -19,30 +19,40 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     boolean existsByEmail(String email);
 
-    @Query("""
-        SELECT u.fullName AS fullName,
-               u.phone AS phone,
-               u.email AS email
-        FROM User u
-        WHERE LOWER(u.fullName) LIKE LOWER(CONCAT('%', :fullName, '%'))
-    """)
-    Page<UserResponse> findByFullName(@Param("fullName") String fullName, Pageable pageable);
+    boolean existsByPhone(String phone);
 
     @Query("""
-        SELECT u.fullName AS fullName,
-               u.phone AS phone,
-               u.email AS email
-        FROM User u
-        WHERE LOWER(u.phone) LIKE LOWER(CONCAT('%', :phone, '%'))
-    """)
+    SELECT new KidAttend.demo.dto.response.user.UserResponse(
+        u.id,
+        u.fullName,
+        u.phone,
+        u.email
+    )
+    FROM User u
+    WHERE LOWER(u.fullName) LIKE LOWER(CONCAT('%', :fullName, '%'))
+""")
+    Page<UserResponse> findByFullName(@Param("fullName") String fullName, Pageable pageable);
+    @Query("""
+    SELECT new KidAttend.demo.dto.response.user.UserResponse(
+        u.id,
+        u.fullName,
+        u.phone,
+        u.email
+    )
+    FROM User u
+    WHERE LOWER(u.phone) LIKE LOWER(CONCAT('%', :phone, '%'))
+""")
     Page<UserResponse> findByPhone(@Param("phone") String phone, Pageable pageable);
 
     @Query("""
-        SELECT u.fullName AS fullName,
-               u.phone AS phone,
-               u.email AS email
-        FROM User u
-    """)
+    SELECT new KidAttend.demo.dto.response.user.UserResponse(
+        u.id,
+        u.fullName,
+        u.phone,
+        u.email
+    )
+    FROM User u
+""")
     Page<UserResponse> findAllUsers(Pageable pageable);
 
 }

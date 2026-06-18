@@ -1,6 +1,7 @@
 package KidAttend.demo.controller;
 
 import KidAttend.demo.common.response.ResponseData;
+import KidAttend.demo.dto.request.user.BulkCreateUserRequest;
 import KidAttend.demo.dto.request.user.UpdateUserInfo;
 import KidAttend.demo.dto.request.user.UpdateUserPassword;
 import KidAttend.demo.dto.response.user.UserResponse;
@@ -14,6 +15,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/users")
@@ -141,6 +144,21 @@ public class UserController {
                 null,
                 "Delete user successfully",
                 HttpStatus.OK
+        );
+    }
+
+    @PostMapping("/bulk")
+    public ResponseEntity<?> createUsers(
+            @Valid @RequestBody BulkCreateUserRequest request
+    ) {
+
+        List<UserResponse> response =
+                userService.createUsers(request);
+
+        return ResponseData.success(
+                response,
+                "Create users successfully",
+                HttpStatus.CREATED
         );
     }
 }

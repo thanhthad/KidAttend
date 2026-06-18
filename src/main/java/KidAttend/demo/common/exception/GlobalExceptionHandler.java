@@ -6,6 +6,8 @@ import KidAttend.demo.common.response.ResponseData;
 import KidAttend.demo.exception.refreshtoken.InvalidRefreshTokenException;
 import KidAttend.demo.exception.refreshtoken.RefreshTokenExpiredException;
 import KidAttend.demo.exception.refreshtoken.RefreshTokenRevokedException;
+import KidAttend.demo.exception.user.EmailAlreadyExistsException;
+import KidAttend.demo.exception.user.PhoneAlreadyExistsException;
 import KidAttend.demo.exception.user.UserAlreadyExistsException;
 import KidAttend.demo.exception.user.UserNotFoundException;
 import lombok.extern.slf4j.Slf4j;
@@ -35,6 +37,16 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(UserAlreadyExistsException.class)
     public ResponseEntity<ApiResponse<Object>> handleUserAlreadyExists(UserAlreadyExistsException ex) {
         return ResponseData.fail("User already exists", HttpStatus.CONFLICT);
+    }
+
+    @ExceptionHandler(EmailAlreadyExistsException.class)
+    public ResponseEntity<ApiResponse<Object>> handleEmailExists(EmailAlreadyExistsException ex) {
+        return ResponseData.fail(ex.getMessage(), HttpStatus.CONFLICT);
+    }
+
+    @ExceptionHandler(PhoneAlreadyExistsException.class)
+    public ResponseEntity<ApiResponse<Object>> handlePhoneExists(PhoneAlreadyExistsException ex) {
+        return ResponseData.fail(ex.getMessage(), HttpStatus.CONFLICT);
     }
 
     // ================= REFRESH TOKEN =================
