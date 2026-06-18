@@ -30,8 +30,10 @@ public class Student {
 
     private String parentName;
 
+    @Column(unique = true)
     private String parentPhone;
 
+    @Column(unique = true)
     private String parentEmail;
 
     private String address;

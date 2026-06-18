@@ -11,6 +11,7 @@ import java.time.LocalDateTime;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 public class ClassEntity {
 
     @Id
@@ -24,20 +25,21 @@ public class ClassEntity {
     private Integer capacity;
 
     @OneToOne
-    @JoinColumn(name = "teacher_id", unique = true)
+    @JoinColumn(name = "teacher_id")
     private User teacher;
 
     private String description;
 
-    private String status;
+    @Enumerated(EnumType.STRING)
+    private ClassStatus status;
 
     private LocalDateTime createdAt;
-
     private LocalDateTime updatedAt;
 
     @PrePersist
     public void prePersist() {
         this.createdAt = LocalDateTime.now();
+        this.updatedAt = LocalDateTime.now();
     }
 
     @PreUpdate
