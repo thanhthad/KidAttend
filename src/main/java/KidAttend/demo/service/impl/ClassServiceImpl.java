@@ -47,21 +47,44 @@ public class ClassServiceImpl implements ClassService {
     public ClassResponse update(Long id, UpdateClassRequest request) {
 
         ClassEntity entity = classRepository.findById(id)
-                .orElseThrow(() -> new ClassNotFoundException("Class not found: " + id));
+                .orElseThrow(() ->
+                        new ClassNotFoundException("Class not found: " + id));
 
-        entity.setName(request.getName());
-        entity.setAge(request.getAge());
-        entity.setCapacity(request.getCapacity());
-        entity.setDescription(request.getDescription());
-        entity.setStatus(request.getStatus());
+        if (request.getName() != null) {
+            if (request.getName().isBlank()) {
+                throw new IllegalArgumentException("Name cannot be blank");
+            }
+            entity.setName(request.getName());
+        }
+
+        if (request.getAge() != null) {
+            if (request.getAge() <= 0) {
+                throw new IllegalArgumentException("Age must be > 0");
+            }
+            entity.setAge(request.getAge());
+        }
+
+        if (request.getCapacity() != null) {
+            if (request.getCapacity() <= 0) {
+                throw new IllegalArgumentException("Capacity must be > 0");
+            }
+            entity.setCapacity(request.getCapacity());
+        }
+
+        if (request.getDescription() != null) {
+            if (request.getDescription().isBlank()) {
+                throw new IllegalArgumentException("Description cannot be blank");
+            }
+            entity.setDescription(request.getDescription());
+        }
+
+        if (request.getStatus() != null) {
+            entity.setStatus(request.getStatus());
+        }
 
         if (request.getTeacherId() != null) {
+
             User teacher = userServiceDomain.getByUserId(request.getTeacherId());
-
-            if (!"TEACHER".equalsIgnoreCase(teacher.getRole())) {
-                throw new IllegalArgumentException("User is not a teacher");
-            }
-
             entity.setTeacher(teacher);
         }
 

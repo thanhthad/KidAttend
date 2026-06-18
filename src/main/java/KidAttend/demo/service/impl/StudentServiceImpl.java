@@ -42,6 +42,7 @@ public class StudentServiceImpl implements StudentService {
         }if(request.getParentPhone() != null && studentRepository.existsByParentPhone(request.getParentPhone())){
             throw new StudentAlreadyExistsException("Student already exists with phone number:" + request.getParentPhone());
         }
+        return null;
     }
 
     @Override

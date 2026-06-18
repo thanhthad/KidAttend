@@ -1,11 +1,12 @@
 package KidAttend.demo.common.exception;
-
-
 import KidAttend.demo.common.response.ApiResponse;
 import KidAttend.demo.common.response.ResponseData;
+import KidAttend.demo.exception.classroom.ClassAlreadyExistsException;
 import KidAttend.demo.exception.refreshtoken.InvalidRefreshTokenException;
 import KidAttend.demo.exception.refreshtoken.RefreshTokenExpiredException;
 import KidAttend.demo.exception.refreshtoken.RefreshTokenRevokedException;
+import KidAttend.demo.exception.student.StudentAlreadyExistsException;
+import KidAttend.demo.exception.student.StudentNotFoundException;
 import KidAttend.demo.exception.user.EmailAlreadyExistsException;
 import KidAttend.demo.exception.user.PhoneAlreadyExistsException;
 import KidAttend.demo.exception.user.UserAlreadyExistsException;
@@ -14,8 +15,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -26,7 +25,6 @@ import java.util.Map;
 @RestControllerAdvice
 @Slf4j
 public class GlobalExceptionHandler {
-
 
     // ================= USER =================
     @ExceptionHandler(UserNotFoundException.class)
@@ -47,6 +45,29 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(PhoneAlreadyExistsException.class)
     public ResponseEntity<ApiResponse<Object>> handlePhoneExists(PhoneAlreadyExistsException ex) {
         return ResponseData.fail(ex.getMessage(), HttpStatus.CONFLICT);
+    }
+
+    // ================= CLASSROOM =================
+    @ExceptionHandler(ClassNotFoundException.class)
+    public ResponseEntity<ApiResponse<Object>> handleClassRoomNotFound(ClassNotFoundException ex) {
+        return ResponseData.fail("Class not found", HttpStatus.NOT_FOUND);
+    }
+
+    @ExceptionHandler(ClassAlreadyExistsException.class)
+    public ResponseEntity<ApiResponse<Object>> handleClassRoomAlreadyExists(ClassAlreadyExistsException ex) {
+        return ResponseData.fail("Class already exists", HttpStatus.CONFLICT);
+    }
+
+
+    // ================= STUDENT =================
+    @ExceptionHandler(StudentNotFoundException.class)
+    public ResponseEntity<ApiResponse<Object>> handleStudentNotFound(StudentNotFoundException ex) {
+        return ResponseData.fail("Student not found", HttpStatus.NOT_FOUND);
+    }
+
+    @ExceptionHandler(StudentAlreadyExistsException.class)
+    public ResponseEntity<ApiResponse<Object>> handleStudentAlreadyExists(StudentAlreadyExistsException ex) {
+        return ResponseData.fail("Student already exists", HttpStatus.CONFLICT);
     }
 
     // ================= REFRESH TOKEN =================
@@ -113,7 +134,7 @@ public class GlobalExceptionHandler {
 
 
         return ResponseData.fail(
-                "Internal server error",
+                "Internal server errordwada",
                 HttpStatus.INTERNAL_SERVER_ERROR
         );
     }
