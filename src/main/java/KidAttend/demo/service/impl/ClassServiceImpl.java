@@ -4,7 +4,8 @@ import KidAttend.demo.dto.request.classroom.*;
 import KidAttend.demo.dto.response.classroom.ClassResponse;
 import KidAttend.demo.dto.response.user.TeacherResponse;
 import KidAttend.demo.entity.*;
-import KidAttend.demo.exception.classroom.ClassNotFoundException;
+import KidAttend.demo.exception.classroom.ClassRoomAlreadyExistsException;
+import KidAttend.demo.exception.classroom.ClassRoomNotFoundException;
 import KidAttend.demo.repository.ClassRepository;
 import KidAttend.demo.service.ClassService;
 import KidAttend.demo.service.UserServiceDomain;
@@ -25,8 +26,16 @@ public class ClassServiceImpl implements ClassService {
     public ClassResponse create(CreateClassRequest request) {
 
         User teacher = null;
+
         if (request.getTeacherId() != null) {
+
             teacher = userServiceDomain.getByUserId(request.getTeacherId());
+
+            if (classRepository.existsByTeacherId(request.getTeacherId())) {
+                throw new ClassRoomAlreadyExistsException(
+                        "Teacher already assigned to another class"
+                );
+            }
         }
 
         ClassEntity entity = ClassEntity.builder()
@@ -48,7 +57,7 @@ public class ClassServiceImpl implements ClassService {
 
         ClassEntity entity = classRepository.findById(id)
                 .orElseThrow(() ->
-                        new ClassNotFoundException("Class not found: " + id));
+                        new ClassRoomNotFoundException("Class not found: " + id));
 
         if (request.getName() != null) {
             if (request.getName().isBlank()) {
@@ -96,7 +105,7 @@ public class ClassServiceImpl implements ClassService {
     @Override
     public void delete(Long id) {
         ClassEntity entity = classRepository.findById(id)
-                .orElseThrow(() -> new ClassNotFoundException("Class not found: " + id));
+                .orElseThrow(() -> new ClassRoomNotFoundException("Class not found: " + id));
 
         classRepository.delete(entity);
     }
@@ -104,7 +113,7 @@ public class ClassServiceImpl implements ClassService {
     @Override
     public ClassResponse getById(Long id) {
         ClassEntity entity = classRepository.findById(id)
-                .orElseThrow(() -> new ClassNotFoundException("Class not found: " + id));
+                .orElseThrow(() -> new ClassRoomNotFoundException("Class not found: " + id));
 
         return mapToResponse(entity);
     }

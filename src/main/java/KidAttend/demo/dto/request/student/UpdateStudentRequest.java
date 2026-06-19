@@ -1,13 +1,13 @@
 package KidAttend.demo.dto.request.student;
 
-import lombok.Getter;
-import lombok.Setter;
+import lombok.Data;
 
 import java.time.LocalDate;
 
-@Getter
-@Setter
-public class StudentCreateAndUpdate {
+@Data
+public class UpdateStudentRequest {
+
+    private Long classId;
 
     private String fullName;
 
@@ -22,4 +22,6 @@ public class StudentCreateAndUpdate {
     private String parentEmail;
 
     private String address;
+
+    private String status;
 }

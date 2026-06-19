@@ -22,8 +22,10 @@ public class User {
 
     private String fullName;
 
+    @Column(unique = true)
     private String phone;
 
+    @Column(unique = true)
     private String email;
 
     private String role;

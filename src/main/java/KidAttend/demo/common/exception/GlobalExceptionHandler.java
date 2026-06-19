@@ -1,7 +1,8 @@
 package KidAttend.demo.common.exception;
 import KidAttend.demo.common.response.ApiResponse;
 import KidAttend.demo.common.response.ResponseData;
-import KidAttend.demo.exception.classroom.ClassAlreadyExistsException;
+import KidAttend.demo.exception.classroom.ClassRoomAlreadyExistsException;
+import KidAttend.demo.exception.classroom.ClassRoomNotFoundException;
 import KidAttend.demo.exception.refreshtoken.InvalidRefreshTokenException;
 import KidAttend.demo.exception.refreshtoken.RefreshTokenExpiredException;
 import KidAttend.demo.exception.refreshtoken.RefreshTokenRevokedException;
@@ -22,6 +23,8 @@ import org.springframework.web.method.annotation.MethodArgumentTypeMismatchExcep
 
 import java.util.HashMap;
 import java.util.Map;
+
+
 @RestControllerAdvice
 @Slf4j
 public class GlobalExceptionHandler {
@@ -29,12 +32,12 @@ public class GlobalExceptionHandler {
     // ================= USER =================
     @ExceptionHandler(UserNotFoundException.class)
     public ResponseEntity<ApiResponse<Object>> handleUserNotFound(UserNotFoundException ex) {
-        return ResponseData.fail("User not found", HttpStatus.NOT_FOUND);
+        return ResponseData.fail(ex.getMessage(), HttpStatus.NOT_FOUND);
     }
 
     @ExceptionHandler(UserAlreadyExistsException.class)
     public ResponseEntity<ApiResponse<Object>> handleUserAlreadyExists(UserAlreadyExistsException ex) {
-        return ResponseData.fail("User already exists", HttpStatus.CONFLICT);
+        return ResponseData.fail(ex.getMessage(), HttpStatus.CONFLICT);
     }
 
     @ExceptionHandler(EmailAlreadyExistsException.class)
@@ -48,26 +51,26 @@ public class GlobalExceptionHandler {
     }
 
     // ================= CLASSROOM =================
-    @ExceptionHandler(ClassNotFoundException.class)
-    public ResponseEntity<ApiResponse<Object>> handleClassRoomNotFound(ClassNotFoundException ex) {
-        return ResponseData.fail("Class not found", HttpStatus.NOT_FOUND);
+    @ExceptionHandler(ClassRoomNotFoundException.class)
+    public ResponseEntity<ApiResponse<Object>> handleClassRoomNotFound(ClassRoomNotFoundException ex) {
+        return ResponseData.fail(ex.getMessage(), HttpStatus.NOT_FOUND);
     }
 
-    @ExceptionHandler(ClassAlreadyExistsException.class)
-    public ResponseEntity<ApiResponse<Object>> handleClassRoomAlreadyExists(ClassAlreadyExistsException ex) {
-        return ResponseData.fail("Class already exists", HttpStatus.CONFLICT);
+    @ExceptionHandler(ClassRoomAlreadyExistsException.class)
+    public ResponseEntity<ApiResponse<Object>> handleClassRoomAlreadyExists(ClassRoomAlreadyExistsException ex) {
+        return ResponseData.fail(ex.getMessage(), HttpStatus.CONFLICT);
     }
 
 
     // ================= STUDENT =================
     @ExceptionHandler(StudentNotFoundException.class)
     public ResponseEntity<ApiResponse<Object>> handleStudentNotFound(StudentNotFoundException ex) {
-        return ResponseData.fail("Student not found", HttpStatus.NOT_FOUND);
+        return ResponseData.fail(ex.getMessage(), HttpStatus.NOT_FOUND);
     }
 
     @ExceptionHandler(StudentAlreadyExistsException.class)
     public ResponseEntity<ApiResponse<Object>> handleStudentAlreadyExists(StudentAlreadyExistsException ex) {
-        return ResponseData.fail("Student already exists", HttpStatus.CONFLICT);
+        return ResponseData.fail(ex.getMessage(), HttpStatus.CONFLICT);
     }
 
     // ================= REFRESH TOKEN =================
@@ -90,7 +93,6 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiResponse<Object>> handleBadCredentials(BadCredentialsException ex) {
         return ResponseData.fail("Invalid username or password", HttpStatus.UNAUTHORIZED);
     }
-
 
     // ================= VALIDATION =================
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
@@ -132,9 +134,10 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResponse<Object>> handleException(Exception ex) {
 
+        log.error("Exception type: {}", ex.getClass().getName(), ex);
 
         return ResponseData.fail(
-                "Internal server errordwada",
+                "Internal server error",
                 HttpStatus.INTERNAL_SERVER_ERROR
         );
     }

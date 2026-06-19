@@ -1,21 +1,16 @@
 package KidAttend.demo.dto.request.student;
 
-import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotEmpty;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import jakarta.validation.constraints.NotNull;
+import lombok.Data;
 
 import java.util.List;
 
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
+@Data
 public class BulkCreateStudentRequest {
 
-    @NotEmpty
-    @Valid
-    private List<StudentCreateAndUpdate> students;
+    @NotNull(message = "ClassId is required")
+    private Long classId;
+
+    @NotNull(message = "Student list is required")
+    private List<BulkStudentRequest> students;
 }

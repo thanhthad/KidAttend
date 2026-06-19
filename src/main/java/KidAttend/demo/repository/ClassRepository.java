@@ -6,4 +6,6 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
 public interface ClassRepository extends JpaRepository<ClassEntity, Long>,
         JpaSpecificationExecutor<ClassEntity> {
+
+    boolean existsByTeacherId(Long teacherId);
 }
