@@ -13,9 +13,11 @@ import KidAttend.demo.exception.student.StudentNotFoundException;
 import KidAttend.demo.repository.ClassRepository;
 import KidAttend.demo.repository.StudentRepository;
 import KidAttend.demo.service.StudentService;
+import KidAttend.demo.specification.StudentSpecification;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -32,7 +34,21 @@ public class StudentServiceImpl implements StudentService {
     @Override
     public StudentResponse create(CreateStudentRequest request) {
 
-        validateDuplicateOnCreate(request);
+        if (request.getParentPhone() != null &&
+                studentRepository.existsByParentPhone(request.getParentPhone())) {
+
+            throw new StudentAlreadyExistsException(
+                    "Parent phone already exists: " + request.getParentPhone()
+            );
+        }
+
+        if (request.getParentEmail() != null &&
+                studentRepository.existsByParentEmail(request.getParentEmail())) {
+
+            throw new StudentAlreadyExistsException(
+                    "Parent email already exists: " + request.getParentEmail()
+            );
+        }
 
         ClassEntity classEntity = getClassById(request.getClassId());
 
@@ -124,26 +140,11 @@ public class StudentServiceImpl implements StudentService {
     @Override
     public Page<StudentResponse> search(Long classId, String name, String address, Pageable pageable) {
 
-        Page<Student> page;
+        Specification<Student> spec =
+                StudentSpecification.filter(classId, name, address);
 
-        if (classId != null && name != null) {
-            page = studentRepository.findByClassEntity_IdAndFullNameContainingIgnoreCase(
-                    classId, name, pageable);
-
-        } else if (classId != null) {
-            page = studentRepository.findByClassEntity_Id(classId, pageable);
-
-        } else if (name != null) {
-            page = studentRepository.findByFullNameContainingIgnoreCase(name, pageable);
-
-        } else if (address != null) {
-            page = studentRepository.findByAddressContainingIgnoreCase(address, pageable);
-
-        } else {
-            page = studentRepository.findAll(pageable);
-        }
-
-        return page.map(this::mapToResponse);
+        return studentRepository.findAll(spec, pageable)
+                .map(this::mapToResponse);
     }
 
     // ================= HELPERS =================
@@ -156,25 +157,6 @@ public class StudentServiceImpl implements StudentService {
     private ClassEntity getClassById(Long classId) {
         return classRepository.findById(classId)
                 .orElseThrow(() -> new ClassRoomNotFoundException("Class not found: " + classId));
-    }
-
-    private void validateDuplicateOnCreate(CreateStudentRequest request) {
-
-        if (request.getParentPhone() != null &&
-                studentRepository.existsByParentPhone(request.getParentPhone())) {
-
-            throw new StudentAlreadyExistsException(
-                    "Parent phone already exists: " + request.getParentPhone()
-            );
-        }
-
-        if (request.getParentEmail() != null &&
-                studentRepository.existsByParentEmail(request.getParentEmail())) {
-
-            throw new StudentAlreadyExistsException(
-                    "Parent email already exists: " + request.getParentEmail()
-            );
-        }
     }
 
     private void validatePhoneDuplicate(String phone, Long id) {

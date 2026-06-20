@@ -6,13 +6,14 @@ import KidAttend.demo.dto.response.user.TeacherResponse;
 import KidAttend.demo.entity.*;
 import KidAttend.demo.exception.classroom.ClassRoomAlreadyExistsException;
 import KidAttend.demo.exception.classroom.ClassRoomNotFoundException;
+import KidAttend.demo.repository.ClassProjection;
 import KidAttend.demo.repository.ClassRepository;
+import KidAttend.demo.repository.StudentRepository;
 import KidAttend.demo.service.ClassService;
 import KidAttend.demo.service.UserServiceDomain;
-import KidAttend.demo.specification.ClassSpecification;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.*;
-import org.springframework.data.jpa.domain.Specification;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -21,6 +22,9 @@ public class ClassServiceImpl implements ClassService {
 
     private final ClassRepository classRepository;
     private final UserServiceDomain userServiceDomain;
+    private final StudentRepository studentRepository;
+
+    // ================= CREATE =================
 
     @Override
     public ClassResponse create(CreateClassRequest request) {
@@ -31,10 +35,8 @@ public class ClassServiceImpl implements ClassService {
 
             teacher = userServiceDomain.getByUserId(request.getTeacherId());
 
-            if (classRepository.existsByTeacherId(request.getTeacherId())) {
-                throw new ClassRoomAlreadyExistsException(
-                        "Teacher already assigned to another class"
-                );
+            if (classRepository.existsByTeacher_Id(request.getTeacherId())) {
+                throw new ClassRoomAlreadyExistsException("Teacher already assigned to another class");
             }
         }
 
@@ -47,43 +49,30 @@ public class ClassServiceImpl implements ClassService {
                 .teacher(teacher)
                 .build();
 
-        classRepository.save(entity);
-
-        return mapToResponse(entity);
+        return mapEntityToResponse(classRepository.save(entity));
     }
+
+    // ================= UPDATE =================
 
     @Override
     public ClassResponse update(Long id, UpdateClassRequest request) {
 
         ClassEntity entity = classRepository.findById(id)
-                .orElseThrow(() ->
-                        new ClassRoomNotFoundException("Class not found: " + id));
+                .orElseThrow(() -> new ClassRoomNotFoundException("Class not found: " + id));
 
-        if (request.getName() != null) {
-            if (request.getName().isBlank()) {
-                throw new IllegalArgumentException("Name cannot be blank");
-            }
+        if (request.getName() != null && !request.getName().isBlank()) {
             entity.setName(request.getName());
         }
 
-        if (request.getAge() != null) {
-            if (request.getAge() <= 0) {
-                throw new IllegalArgumentException("Age must be > 0");
-            }
+        if (request.getAge() != null && request.getAge() > 0) {
             entity.setAge(request.getAge());
         }
 
-        if (request.getCapacity() != null) {
-            if (request.getCapacity() <= 0) {
-                throw new IllegalArgumentException("Capacity must be > 0");
-            }
+        if (request.getCapacity() != null && request.getCapacity() > 0) {
             entity.setCapacity(request.getCapacity());
         }
 
-        if (request.getDescription() != null) {
-            if (request.getDescription().isBlank()) {
-                throw new IllegalArgumentException("Description cannot be blank");
-            }
+        if (request.getDescription() != null && !request.getDescription().isBlank()) {
             entity.setDescription(request.getDescription());
         }
 
@@ -92,54 +81,70 @@ public class ClassServiceImpl implements ClassService {
         }
 
         if (request.getTeacherId() != null) {
-
             User teacher = userServiceDomain.getByUserId(request.getTeacherId());
             entity.setTeacher(teacher);
         }
 
-        classRepository.save(entity);
-
-        return mapToResponse(entity);
+        return mapEntityToResponse(classRepository.save(entity));
     }
+
+    // ================= DELETE =================
 
     @Override
     public void delete(Long id) {
+
         ClassEntity entity = classRepository.findById(id)
                 .orElseThrow(() -> new ClassRoomNotFoundException("Class not found: " + id));
 
         classRepository.delete(entity);
     }
 
+    // ================= GET BY ID =================
+
     @Override
     public ClassResponse getById(Long id) {
+
         ClassEntity entity = classRepository.findById(id)
                 .orElseThrow(() -> new ClassRoomNotFoundException("Class not found: " + id));
 
-        return mapToResponse(entity);
+        return mapEntityToResponse(entity);
     }
+
+    // ================= GET ALL =================
 
     @Override
     public Page<ClassResponse> getAll(Pageable pageable) {
-        return classRepository.findAll(pageable)
-                .map(this::mapToResponse);
+
+        return classRepository.findAllWithTeacherAndCount(pageable)
+                .map(this::mapProjectionToResponse);
     }
+
+    // ================= SEARCH (PROJECTION) =================
 
     @Override
     public Page<ClassResponse> search(ClassSearchRequest request, Pageable pageable) {
 
-        Specification<ClassEntity> spec = Specification
-                .where(ClassSpecification.nameContains(request.getName()))
-                .and(ClassSpecification.hasAge(request.getAge()))
-                .and(ClassSpecification.hasStatus(request.getStatus()))
-                .and(ClassSpecification.hasTeacher(request.getTeacherId()));
+        String name = request.getName();
 
-        return classRepository.findAll(spec, pageable)
-                .map(this::mapToResponse);
+        // FIX: KHÔNG CONCAT SQL → xử lý Java
+        if (name != null && !name.isBlank()) {
+            name = "%" + name.toLowerCase() + "%";
+        }
+
+        return classRepository.searchClasses(
+                name,
+                request.getAge(),
+                request.getStatus(),
+                request.getTeacherId(),
+                pageable
+        ).map(this::mapProjectionToResponse);
     }
 
-    // ================= mapper =================
+    // ================= ENTITY MAPPER =================
 
-    private ClassResponse mapToResponse(ClassEntity entity) {
+    private ClassResponse mapEntityToResponse(ClassEntity entity) {
+
+        Long studentCount = studentRepository.countByClassEntity_Id(entity.getId());
 
         TeacherResponse teacher = null;
 
@@ -160,7 +165,34 @@ public class ClassServiceImpl implements ClassService {
                 .description(entity.getDescription())
                 .status(entity.getStatus())
                 .teacher(teacher)
-                .currentStudents(0)
+                .currentStudents(studentCount)
+                .build();
+    }
+
+    // ================= PROJECTION MAPPER =================
+
+    private ClassResponse mapProjectionToResponse(ClassProjection p) {
+
+        TeacherResponse teacher = null;
+
+        if (p.getTeacherId() != null) {
+            teacher = TeacherResponse.builder()
+                    .id(p.getTeacherId())
+                    .fullName(p.getTeacherName())
+                    .email(p.getTeacherEmail())
+                    .phone(p.getTeacherPhone())
+                    .build();
+        }
+
+        return ClassResponse.builder()
+                .id(p.getId())
+                .name(p.getName())
+                .age(p.getAge())
+                .capacity(p.getCapacity())
+                .description(p.getDescription())
+                .status(ClassStatus.valueOf(p.getStatus()))
+                .teacher(teacher)
+                .currentStudents(p.getCurrentStudents())
                 .build();
     }
 }

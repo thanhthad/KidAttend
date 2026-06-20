@@ -15,6 +15,7 @@ import KidAttend.demo.exception.user.UserNotFoundException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -128,6 +129,16 @@ public class GlobalExceptionHandler {
         response.setData(errors);
 
         return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ApiResponse<Object>> handleJsonParseError(
+            HttpMessageNotReadableException ex) {
+
+        return ResponseData.fail(
+                "Invalid request body format",
+                HttpStatus.BAD_REQUEST
+        );
     }
 
     // ================= FALLBACK (ONLY IMPORTANT LOG) =================

@@ -19,5 +19,5 @@ public class ClassResponse {
 
     private TeacherResponse teacher;
 
-    private Integer currentStudents;
+    private Long currentStudents;
 }
