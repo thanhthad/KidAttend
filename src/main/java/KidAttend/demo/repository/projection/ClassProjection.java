@@ -1,4 +1,4 @@
-package KidAttend.demo.repository;
+package KidAttend.demo.repository.projection;
 
 public interface ClassProjection {
 

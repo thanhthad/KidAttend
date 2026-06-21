@@ -2,6 +2,7 @@ package KidAttend.demo.repository;
 
 import KidAttend.demo.entity.ClassEntity;
 import KidAttend.demo.entity.ClassStatus;
+import KidAttend.demo.repository.projection.ClassProjection;
 import org.springframework.data.domain.*;
 import org.springframework.data.jpa.repository.*;
 import org.springframework.data.repository.query.Param;
@@ -9,7 +10,7 @@ import org.springframework.data.repository.query.Param;
 public interface ClassRepository extends JpaRepository<ClassEntity, Long>,
         JpaSpecificationExecutor<ClassEntity> {
 
-    boolean existsByTeacher_Id(Long teacherId);
+    boolean existsByTeacherId(Long teacherId);
 
     @Query("""
         SELECT

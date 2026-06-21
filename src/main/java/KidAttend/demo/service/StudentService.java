@@ -19,6 +19,8 @@ public interface StudentService {
 
     StudentResponse getById(Long id);
 
+    List<StudentResponse> getAllByClassId(Long classId);
+
     Page<StudentResponse> search(Long classId, String name, String address, Pageable pageable);
 
     List<StudentResponse> bulkCreate(BulkCreateStudentRequest request);

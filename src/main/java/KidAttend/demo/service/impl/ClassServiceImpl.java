@@ -6,7 +6,7 @@ import KidAttend.demo.dto.response.user.TeacherResponse;
 import KidAttend.demo.entity.*;
 import KidAttend.demo.exception.classroom.ClassRoomAlreadyExistsException;
 import KidAttend.demo.exception.classroom.ClassRoomNotFoundException;
-import KidAttend.demo.repository.ClassProjection;
+import KidAttend.demo.repository.projection.ClassProjection;
 import KidAttend.demo.repository.ClassRepository;
 import KidAttend.demo.repository.StudentRepository;
 import KidAttend.demo.service.ClassService;
@@ -35,7 +35,7 @@ public class ClassServiceImpl implements ClassService {
 
             teacher = userServiceDomain.getByUserId(request.getTeacherId());
 
-            if (classRepository.existsByTeacher_Id(request.getTeacherId())) {
+            if (classRepository.existsByTeacherId(request.getTeacherId())) {
                 throw new ClassRoomAlreadyExistsException("Teacher already assigned to another class");
             }
         }
@@ -60,31 +60,53 @@ public class ClassServiceImpl implements ClassService {
         ClassEntity entity = classRepository.findById(id)
                 .orElseThrow(() -> new ClassRoomNotFoundException("Class not found: " + id));
 
-        if (request.getName() != null && !request.getName().isBlank()) {
+        // ===== NAME =====
+        if (request.getName() != null) {
+            if (request.getName().isBlank()) {
+                throw new IllegalArgumentException("Class name cannot be blank");
+            }
             entity.setName(request.getName());
         }
 
-        if (request.getAge() != null && request.getAge() > 0) {
+        // ===== AGE =====
+        if (request.getAge() != null) {
+            if (request.getAge() <= 0) {
+                throw new IllegalArgumentException("Age must be > 0");
+            }
             entity.setAge(request.getAge());
         }
 
-        if (request.getCapacity() != null && request.getCapacity() > 0) {
+        // ===== CAPACITY =====
+        if (request.getCapacity() != null) {
+            if (request.getCapacity() <= 0) {
+                throw new IllegalArgumentException("Capacity must be > 0");
+            }
             entity.setCapacity(request.getCapacity());
         }
 
-        if (request.getDescription() != null && !request.getDescription().isBlank()) {
+        // ===== DESCRIPTION =====
+        if (request.getDescription() != null) {
+            if (request.getDescription().isBlank()) {
+                throw new IllegalArgumentException("Description cannot be blank");
+            }
             entity.setDescription(request.getDescription());
         }
 
+        // ===== STATUS =====
         if (request.getStatus() != null) {
             entity.setStatus(request.getStatus());
         }
 
+        // ===== TEACHER =====
         if (request.getTeacherId() != null) {
             User teacher = userServiceDomain.getByUserId(request.getTeacherId());
+
+            if (classRepository.existsByTeacherId(request.getTeacherId())) {
+                throw new ClassRoomAlreadyExistsException("Teacher already assigned to another class");
+            }
+
             entity.setTeacher(teacher);
         }
-
         return mapEntityToResponse(classRepository.save(entity));
     }
 

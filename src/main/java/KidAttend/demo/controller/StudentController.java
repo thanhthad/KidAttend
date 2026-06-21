@@ -59,6 +59,11 @@ public class StudentController {
         );
     }
 
+    @GetMapping("/class/{classId}")
+    public List<StudentResponse> getAllByClass(@PathVariable Long classId) {
+        return studentService.getAllByClassId(classId);
+    }
+
     // ================= CREATE =================
     @PostMapping
     public ResponseEntity<?> create(

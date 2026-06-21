@@ -136,6 +136,18 @@ public class StudentServiceImpl implements StudentService {
         return mapToResponse(getStudentById(id));
     }
 
+    @Override
+    public List<StudentResponse> getAllByClassId(Long classId) {
+
+        ClassEntity classEntity = getClassById(classId);
+
+        List<Student> students = studentRepository.findAllByClassEntity_Id(classEntity.getId());
+
+        return students.stream()
+                .map(this::mapToResponse)
+                .toList();
+    }
+
     // ================= SEARCH =================
     @Override
     public Page<StudentResponse> search(Long classId, String name, String address, Pageable pageable) {
