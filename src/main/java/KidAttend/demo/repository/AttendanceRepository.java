@@ -10,8 +10,13 @@ import org.springframework.data.jpa.repository.Query;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 public interface AttendanceRepository extends JpaRepository<Attendance, Long> {
+
+    Optional<Attendance> findByStudent_IdAndAttendanceDate(Long studentId, LocalDate attendanceDate);
+
+    boolean existsByStudent_IdAndAttendanceDate(Long studentId, LocalDate attendanceDate);
 
     @Query("""
         SELECT DISTINCT a.attendanceDate as attendanceDate

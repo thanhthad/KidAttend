@@ -3,9 +3,9 @@ package KidAttend.demo.repository.projection;
 import java.time.LocalDate;
 
 public interface StudentAttendanceHistoryProjection {
-    LocalDate attendanceDate();
+    LocalDate getAttendanceDate();
 
-    String status();
+    String getStatus();
 
-    String note();
+    String getNote();
 }
