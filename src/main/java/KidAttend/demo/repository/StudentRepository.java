@@ -15,9 +15,9 @@ public interface StudentRepository extends JpaRepository<Student, Long>,
     Optional<Student> findByParentPhone(String parentPhone);
     Optional<Student> findByParentEmail(String parentEmail);
 
-    List<Student> findAllByClassEntity_Id(Long classId);
+    List<Student> findAllByClassEntity_IdOrderByFullNameAsc(Long classId);
 
-    long countByClassEntity_Id(Long classId);
+    long countByClassEntityIdAndStatus(Long classId, String status);
 
     boolean existsByParentPhone(String parentPhone);
     boolean existsByParentEmail(String parentEmail);

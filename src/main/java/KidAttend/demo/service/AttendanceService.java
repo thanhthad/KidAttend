@@ -22,6 +22,9 @@ public interface AttendanceService {
 
     List<AttendanceDateResponse> getAttendanceDates();
 
+    List<AttendanceDateResponse> getAttendanceDatesByClassId(Long classId);
+
+
     Page<AttendanceDetailResponse> getAttendanceByDate(
             LocalDate date,
             Pageable pageable);
@@ -29,14 +32,16 @@ public interface AttendanceService {
     List<AttendanceStatusSummaryResponse> getStatusSummaryByDate(
             LocalDate date);
 
+    List<AttendanceStatusSummaryResponse> getStatusSummaryByDateAndClass(Long classId,
+            LocalDate date);
+
     List<TeacherAttendanceSummaryResponse> getTeacherAttendanceSummary(
             Long teacherId,
             LocalDate date);
 
-    Page<ClassAttendanceResponse> getClassAttendance(
+    List<ClassAttendanceResponse> getClassAttendance(
             Long classId,
-            LocalDate date,
-            Pageable pageable);
+            LocalDate date);
 
     Page<StudentAttendanceHistoryResponse> getStudentHistory(
             Long studentId,

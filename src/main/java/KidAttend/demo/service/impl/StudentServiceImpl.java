@@ -8,6 +8,7 @@ import KidAttend.demo.dto.response.student.StudentResponse;
 import KidAttend.demo.entity.ClassEntity;
 import KidAttend.demo.entity.Student;
 import KidAttend.demo.exception.classroom.ClassRoomNotFoundException;
+import KidAttend.demo.exception.student.InvalidAgeException;
 import KidAttend.demo.exception.student.StudentAlreadyExistsException;
 import KidAttend.demo.exception.student.StudentNotFoundException;
 import KidAttend.demo.repository.ClassRepository;
@@ -20,6 +21,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -49,8 +51,16 @@ public class StudentServiceImpl implements StudentService {
                     "Parent email already exists: " + request.getParentEmail()
             );
         }
-
         ClassEntity classEntity = getClassById(request.getClassId());
+
+        long count = studentRepository.countByClassEntityIdAndStatus(classEntity.getId(),"ACTIVE");
+
+        if (count >= classEntity.getCapacity()) {
+            throw new IllegalArgumentException(
+                    "Class is full with class id: " + classEntity.getId());
+        }
+
+        validateAgeForKindergarten(request.getDateOfBirth());
 
         Student student = new Student();
         student.setClassEntity(classEntity);
@@ -78,7 +88,23 @@ public class StudentServiceImpl implements StudentService {
         Student student = getStudentById(id);
 
         if (request.getClassId() != null) {
-            student.setClassEntity(getClassById(request.getClassId()));
+
+            ClassEntity newClass = getClassById(request.getClassId());
+
+            long count = studentRepository
+                    .countByClassEntityIdAndStatus(newClass.getId(), "ACTIVE");
+
+            if (student.getClassEntity() == null ||
+                    !student.getClassEntity().getId().equals(newClass.getId())) {
+
+                if (count >= newClass.getCapacity()) {
+                    throw new IllegalArgumentException(
+                            "Target class is full: " + newClass.getId()
+                    );
+                }
+            }
+
+            student.setClassEntity(newClass);
         }
 
         if (isNotBlank(request.getFullName())) {
@@ -90,6 +116,7 @@ public class StudentServiceImpl implements StudentService {
         }
 
         if (request.getDateOfBirth() != null) {
+            validateAgeForKindergarten(request.getDateOfBirth());
             student.setDateOfBirth(request.getDateOfBirth());
         }
 
@@ -141,7 +168,7 @@ public class StudentServiceImpl implements StudentService {
 
         ClassEntity classEntity = getClassById(classId);
 
-        List<Student> students = studentRepository.findAllByClassEntity_Id(classEntity.getId());
+        List<Student> students = studentRepository.findAllByClassEntity_IdOrderByFullNameAsc(classEntity.getId());
 
         return students.stream()
                 .map(this::mapToResponse)
@@ -160,6 +187,18 @@ public class StudentServiceImpl implements StudentService {
     }
 
     // ================= HELPERS =================
+
+    private void validateAgeForKindergarten(LocalDate dob) {
+
+        int age = java.time.Period.between(dob, java.time.LocalDate.now()).getYears();
+
+        // mầm non: 1 - 6 tuổi
+        if (age < 1 || age > 6) {
+            throw new InvalidAgeException(
+                    "Student age must be between 1 and 6 years old"
+            );
+        }
+    }
 
     private Student getStudentById(Long id) {
         return studentRepository.findById(id)
@@ -232,6 +271,15 @@ public class StudentServiceImpl implements StudentService {
                 throw new StudentAlreadyExistsException(
                         "Parent email already exists: " + req.getParentEmail()
                 );
+            }
+
+            validateAgeForKindergarten(req.getDateOfBirth());
+
+            long current = studentRepository.countByClassEntityIdAndStatus(classEntity.getId(),"ACTIVE");
+            long incoming = request.getStudents().size();
+
+            if (current + incoming > classEntity.getCapacity()) {
+                throw new IllegalArgumentException("Class is full");
             }
 
             Student student = new Student();

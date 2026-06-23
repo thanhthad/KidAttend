@@ -20,6 +20,15 @@ public interface AttendanceRepository extends JpaRepository<Attendance, Long> {
 
     Optional<Attendance> findByStudent_IdAndAttendanceDate(Long studentId, LocalDate attendanceDate);
 
+    @Query("""
+    SELECT DISTINCT a.attendanceDate as attendanceDate
+    FROM Attendance a
+    JOIN a.student s
+    WHERE s.classEntity.id = :classId
+    ORDER BY a.attendanceDate DESC
+""")
+    List<AttendanceDateProjection> getAttendanceDatesByClassId(Long classId);
+
     boolean existsByStudent_IdAndAttendanceDate(Long studentId, LocalDate attendanceDate);
 
     @Query("""
@@ -46,8 +55,7 @@ public interface AttendanceRepository extends JpaRepository<Attendance, Long> {
         SELECT
             a.student.id as studentId,
             SUM(CASE WHEN a.status='PRESENT' THEN 1 ELSE 0 END) as presentDays,
-            SUM(CASE WHEN a.status='ABSENT' THEN 1 ELSE 0 END) as absentDays,
-            SUM(CASE WHEN a.status='LATE' THEN 1 ELSE 0 END) as lateDays
+            SUM(CASE WHEN a.status='ABSENT' THEN 1 ELSE 0 END) as absentDays
         FROM Attendance a
         WHERE a.student.id = :studentId
         GROUP BY a.student.id
@@ -104,11 +112,11 @@ public interface AttendanceRepository extends JpaRepository<Attendance, Long> {
             ON a.student.id = s.id
             AND a.attendanceDate = :date
         WHERE s.classEntity.id = :classId
+        ORDER BY s.fullName ASC
     """)
-    Page<ClassAttendanceProjection> getClassAttendance(
+    List<ClassAttendanceProjection> getClassAttendance(
             Long classId,
-            LocalDate date,
-            Pageable pageable
+            LocalDate date
     );
 
     @Query("""
@@ -190,18 +198,32 @@ public interface AttendanceRepository extends JpaRepository<Attendance, Long> {
     );
 
     @Query("""
-        SELECT
-            c.id as classId,
-            c.name as className,
-            COUNT(a.id) as total,
-            SUM(CASE WHEN a.status = 'PRESENT' THEN 1 ELSE 0 END) as present
-        FROM ClassEntity c
-        JOIN Student s ON s.classEntity.id = c.id
-        JOIN Attendance a ON a.student.id = s.id
-        WHERE a.attendanceDate = :date
-        GROUP BY c.id, c.name
-    """)
-    List<ClassAttendanceRateProjection> getAttendanceRate(
+    SELECT
+        a.status as status,
+        COUNT(a.id) as total
+    FROM Attendance a
+    JOIN a.student s
+    WHERE a.attendanceDate = :date
+    AND s.classEntity.id = :classId
+    GROUP BY a.status
+""")
+    List<AttendanceStatusSummaryProjection> getStatusSummaryByDateAndClass(
+            Long classId,
             LocalDate date
     );
+
+    @Query("""
+    SELECT
+        c.id as classId,
+        c.name as className,
+        COUNT(a.id) as total,
+        SUM(CASE WHEN a.status = 'PRESENT' THEN 1 ELSE 0 END) as present,
+        (SUM(CASE WHEN a.status = 'PRESENT' THEN 1 ELSE 0 END) * 100.0 / COUNT(a.id)) as rate
+    FROM ClassEntity c
+    JOIN Student s ON s.classEntity.id = c.id
+    JOIN Attendance a ON a.student.id = s.id
+    WHERE a.attendanceDate = :date
+    GROUP BY c.id, c.name
+""")
+    List<ClassAttendanceRateProjection> getAttendanceRate(LocalDate date);
 }

@@ -7,10 +7,14 @@ import org.springframework.data.domain.*;
 import org.springframework.data.jpa.repository.*;
 import org.springframework.data.repository.query.Param;
 
+import java.util.Optional;
+
 public interface ClassRepository extends JpaRepository<ClassEntity, Long>,
         JpaSpecificationExecutor<ClassEntity> {
 
     boolean existsByTeacherId(Long teacherId);
+
+    Optional<ClassEntity> findByTeacher_Id(Long teacherId);
 
     @Query("""
         SELECT
@@ -32,7 +36,7 @@ public interface ClassRepository extends JpaRepository<ClassEntity, Long>,
         LEFT JOIN c.teacher t
         LEFT JOIN Student s ON s.classEntity.id = c.id
 
-        WHERE (:name IS NULL OR LOWER(c.name) LIKE LOWER(:name))
+        WHERE (:name IS NULL OR c.name ILIKE CONCAT('%', :name, '%'))
           AND (:age IS NULL OR c.age = :age)
           AND (:status IS NULL OR c.status = :status)
           AND (:teacherId IS NULL OR t.id = :teacherId)
@@ -40,7 +44,7 @@ public interface ClassRepository extends JpaRepository<ClassEntity, Long>,
         GROUP BY
             c.id, c.name, c.age, c.capacity, c.description, c.status,
             t.id, t.fullName, t.email, t.phone
-    """)
+""")
     Page<ClassProjection> searchClasses(
             @Param("name") String name,
             @Param("age") Integer age,

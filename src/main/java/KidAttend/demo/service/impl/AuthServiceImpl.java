@@ -73,7 +73,11 @@ public class AuthServiceImpl implements AuthService {
                         )
                 );
 
-        if (!passwordEncoder.matches(request.getPassword(), user.getPasswordHash())) {
+//        if (!passwordEncoder.matches(request.getPassword(), user.getPasswordHash())) {
+//            throw new BadCredentialsException("Invalid password");
+//        }
+
+        if (request.getPassword().equals(user.getPasswordHash())) {
             throw new BadCredentialsException("Invalid password");
         }
 

@@ -72,6 +72,20 @@ public class ClassController {
         );
     }
 
+    // ================= GET CLASS BY TEACHERID =================
+    @GetMapping("/teacher/{teacherId}")
+    public ResponseEntity<?> getClassByTeacherId(@PathVariable Long teacherId) {
+
+        ClassResponse response =
+                classService.getByTeacherId(teacherId);
+
+        return ResponseData.success(
+                response,
+                "Get class successfully",
+                HttpStatus.OK
+        );
+    }
+
     // ================= CREATE CLASS =================
     @PostMapping
     public ResponseEntity<?> createClass(

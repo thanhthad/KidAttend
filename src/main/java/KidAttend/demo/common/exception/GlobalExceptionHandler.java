@@ -6,6 +6,7 @@ import KidAttend.demo.exception.classroom.ClassRoomNotFoundException;
 import KidAttend.demo.exception.refreshtoken.InvalidRefreshTokenException;
 import KidAttend.demo.exception.refreshtoken.RefreshTokenExpiredException;
 import KidAttend.demo.exception.refreshtoken.RefreshTokenRevokedException;
+import KidAttend.demo.exception.student.InvalidAgeException;
 import KidAttend.demo.exception.student.StudentAlreadyExistsException;
 import KidAttend.demo.exception.student.StudentNotFoundException;
 import KidAttend.demo.exception.user.EmailAlreadyExistsException;
@@ -69,6 +70,11 @@ public class GlobalExceptionHandler {
         return ResponseData.fail(ex.getMessage(), HttpStatus.NOT_FOUND);
     }
 
+    @ExceptionHandler(InvalidAgeException.class)
+    public ResponseEntity<ApiResponse<Object>> handleInvalidAge(InvalidAgeException ex) {
+        return ResponseData.fail(ex.getMessage(), HttpStatus.BAD_REQUEST);
+    }
+
     @ExceptionHandler(StudentAlreadyExistsException.class)
     public ResponseEntity<ApiResponse<Object>> handleStudentAlreadyExists(StudentAlreadyExistsException ex) {
         return ResponseData.fail(ex.getMessage(), HttpStatus.CONFLICT);
@@ -125,7 +131,7 @@ public class GlobalExceptionHandler {
 
         ApiResponse<Object> response = new ApiResponse<>();
         response.setSuccess(false);
-        response.setMessage("Invalid argument");
+        response.setMessage(ex.getMessage());
         response.setData(errors);
 
         return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);

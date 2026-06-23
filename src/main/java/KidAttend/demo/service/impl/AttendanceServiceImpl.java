@@ -5,13 +5,20 @@ import KidAttend.demo.dto.request.attendance.UpdateAttendanceRequest;
 import KidAttend.demo.dto.response.attendance.*;
 import KidAttend.demo.dto.response.student.StudentResponse;
 import KidAttend.demo.entity.Attendance;
+import KidAttend.demo.entity.ClassEntity;
 import KidAttend.demo.entity.Student;
 import KidAttend.demo.entity.User;
 import KidAttend.demo.exception.attendance.AttendanceAlreadyExistsException;
 import KidAttend.demo.exception.attendance.AttendanceNotFoundException;
+import KidAttend.demo.exception.classroom.ClassRoomNotFoundException;
 import KidAttend.demo.exception.student.StudentNotFoundException;
 import KidAttend.demo.repository.AttendanceRepository;
+import KidAttend.demo.repository.ClassRepository;
 import KidAttend.demo.repository.StudentRepository;
+import KidAttend.demo.repository.projection.AttendanceDateProjection;
+import KidAttend.demo.repository.projection.AttendanceStatusSummaryProjection;
+import KidAttend.demo.repository.projection.ClassAttendanceProjection;
+import KidAttend.demo.repository.projection.ClassAttendanceRateProjection;
 import KidAttend.demo.service.AttendanceService;
 import KidAttend.demo.service.UserServiceDomain;
 import jakarta.transaction.Transactional;
@@ -30,11 +37,12 @@ public class AttendanceServiceImpl implements AttendanceService {
     private final AttendanceRepository attendanceRepository;
     private final StudentRepository studentRepository;
     private final UserServiceDomain userServiceDomain;
+    private final ClassRepository classRepository;
 
     @Override
     @Transactional
     public AttendanceResponse create(CreateAttendanceRequest request) {
-        if(!attendanceRepository.existsByStudent_IdAndAttendanceDate(
+        if(attendanceRepository.existsByStudent_IdAndAttendanceDate(
                 request.getStudentId(),request.getAttendanceDate()
         )){
             throw new AttendanceAlreadyExistsException("Student already attend today");
@@ -68,14 +76,17 @@ public class AttendanceServiceImpl implements AttendanceService {
     @Override
     @Transactional
     public AttendanceResponse update(Long id, UpdateAttendanceRequest request) {
-        Attendance attendance = attendanceRepository.findById(id).orElseThrow(
-                () -> new AttendanceNotFoundException("Attendance not found with id:" + id)
-        );
+
+        Attendance attendance = attendanceRepository.findById(id)
+                .orElseThrow(() ->
+                        new AttendanceNotFoundException(
+                                "Attendance not found with id: " + id));
+
         attendance.setStatus(request.getStatus());
         attendance.setNote(request.getNote());
-        attendanceRepository.save(attendance);
+
         return AttendanceResponse.builder()
-                .id(id)
+                .id(attendance.getId())
                 .studentId(attendance.getStudent().getId())
                 .studentName(attendance.getStudent().getFullName())
                 .attendanceDate(attendance.getAttendanceDate())
@@ -97,7 +108,34 @@ public class AttendanceServiceImpl implements AttendanceService {
 
     @Override
     public List<AttendanceDateResponse> getAttendanceDates() {
-        return List.of();
+
+        List<AttendanceDateProjection> projections =
+                attendanceRepository.getAttendanceDates();
+
+        return projections.stream()
+                .map(p -> new AttendanceDateResponse(
+                        p.getAttendanceDate()
+                ))
+                .toList();
+    }
+
+    @Override
+    public List<AttendanceDateResponse> getAttendanceDatesByClassId(Long classId) {
+
+        if (!classRepository.existsById(classId)) {
+            throw new ClassRoomNotFoundException(
+                    "Class not found with id: " + classId
+            );
+        }
+
+        List<AttendanceDateProjection> projections =
+                attendanceRepository.getAttendanceDatesByClassId(classId);
+
+        return projections.stream()
+                .map(p -> new AttendanceDateResponse(
+                        p.getAttendanceDate()
+                ))
+                .toList();
     }
 
     @Override
@@ -107,8 +145,41 @@ public class AttendanceServiceImpl implements AttendanceService {
 
     @Override
     public List<AttendanceStatusSummaryResponse> getStatusSummaryByDate(LocalDate date) {
-        return List.of();
+
+        List<AttendanceStatusSummaryProjection> result =
+                attendanceRepository.getStatusSummaryByDate(date);
+
+        return result.stream()
+                .map(p -> new AttendanceStatusSummaryResponse(
+                        p.getStatus(),
+                        p.getTotal()
+                ))
+                .toList();
     }
+
+    @Override
+    public List<AttendanceStatusSummaryResponse> getStatusSummaryByDateAndClass(
+            Long classId,
+            LocalDate date
+    ) {
+
+        if (!classRepository.existsById(classId)) {
+            throw new ClassRoomNotFoundException(
+                    "Class not found with id: " + classId
+            );
+        }
+
+        List<AttendanceStatusSummaryProjection> result =
+                attendanceRepository.getStatusSummaryByDateAndClass(classId, date);
+
+        return result.stream()
+                .map(p -> new AttendanceStatusSummaryResponse(
+                        p.getStatus(),
+                        p.getTotal()
+                ))
+                .toList();
+    }
+
 
     @Override
     public List<TeacherAttendanceSummaryResponse> getTeacherAttendanceSummary(Long teacherId, LocalDate date) {
@@ -116,8 +187,32 @@ public class AttendanceServiceImpl implements AttendanceService {
     }
 
     @Override
-    public Page<ClassAttendanceResponse> getClassAttendance(Long classId, LocalDate date, Pageable pageable) {
-        return null;
+    public List<ClassAttendanceResponse> getClassAttendance(Long classId, LocalDate date) {
+
+        if (!classRepository.existsById(classId)) {
+            throw new ClassRoomNotFoundException(
+                    "Class not found with id: " + classId
+            );
+        }
+
+        if (date.isAfter(LocalDate.now())) {
+            throw new IllegalArgumentException(
+                    "Date cannot be in the future"
+            );
+        }
+
+        List<ClassAttendanceProjection> projections =
+                attendanceRepository.getClassAttendance(classId, date);
+
+        // 4. Map projection -> response DTO
+        return projections.stream()
+                .map(p -> new ClassAttendanceResponse(
+                        p.getStudentId(),
+                        p.getStudentName(),
+                        p.getStatus(),
+                        p.getNote()
+                ))
+                .toList();
     }
 
     @Override
@@ -137,7 +232,19 @@ public class AttendanceServiceImpl implements AttendanceService {
 
     @Override
     public List<ClassAttendanceRateResponse> getAttendanceRate(LocalDate date) {
-        return List.of();
+
+        List<ClassAttendanceRateProjection> result =
+                attendanceRepository.getAttendanceRate(date);
+
+        return result.stream()
+                .map(p -> new ClassAttendanceRateResponse(
+                        p.getClassId(),
+                        p.getClassName(),
+                        p.getTotal(),
+                        p.getPresent(),
+                        p.getRate()
+                ))
+                .toList();
     }
 
     @Override

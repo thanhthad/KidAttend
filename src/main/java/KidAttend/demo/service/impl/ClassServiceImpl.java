@@ -6,6 +6,8 @@ import KidAttend.demo.dto.response.user.TeacherResponse;
 import KidAttend.demo.entity.*;
 import KidAttend.demo.exception.classroom.ClassRoomAlreadyExistsException;
 import KidAttend.demo.exception.classroom.ClassRoomNotFoundException;
+import KidAttend.demo.exception.student.InvalidAgeException;
+import KidAttend.demo.exception.user.UserNotFoundException;
 import KidAttend.demo.repository.projection.ClassProjection;
 import KidAttend.demo.repository.ClassRepository;
 import KidAttend.demo.repository.StudentRepository;
@@ -15,6 +17,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+
+import java.time.LocalDate;
 
 @Service
 @RequiredArgsConstructor
@@ -58,9 +62,10 @@ public class ClassServiceImpl implements ClassService {
     public ClassResponse update(Long id, UpdateClassRequest request) {
 
         ClassEntity entity = classRepository.findById(id)
-                .orElseThrow(() -> new ClassRoomNotFoundException("Class not found: " + id));
+                .orElseThrow(() ->
+                        new ClassRoomNotFoundException("Class not found: " + id));
 
-        // ===== NAME =====
+        // ================= NAME =================
         if (request.getName() != null) {
             if (request.getName().isBlank()) {
                 throw new IllegalArgumentException("Class name cannot be blank");
@@ -68,23 +73,43 @@ public class ClassServiceImpl implements ClassService {
             entity.setName(request.getName());
         }
 
-        // ===== AGE =====
+        // ================= AGE =================
         if (request.getAge() != null) {
+
             if (request.getAge() <= 0) {
                 throw new IllegalArgumentException("Age must be > 0");
             }
+
+            if(request.getAge() > 6 ){
+                throw  new IllegalArgumentException("Age must be > 6");
+            }
+
             entity.setAge(request.getAge());
         }
 
-        // ===== CAPACITY =====
+        // ================= CAPACITY =================
         if (request.getCapacity() != null) {
+
             if (request.getCapacity() <= 0) {
                 throw new IllegalArgumentException("Capacity must be > 0");
             }
+            if (request.getCapacity() > 50) {
+                throw new IllegalArgumentException("Capacity must be > 50");
+            }
+
+            long activeCount = studentRepository
+                    .countByClassEntityIdAndStatus(id, "ACTIVE");
+
+            if (request.getCapacity() < activeCount) {
+                throw new IllegalArgumentException(
+                        "Capacity cannot be lower than current ACTIVE students: " + activeCount
+                );
+            }
+
             entity.setCapacity(request.getCapacity());
         }
 
-        // ===== DESCRIPTION =====
+        // ================= DESCRIPTION =================
         if (request.getDescription() != null) {
             if (request.getDescription().isBlank()) {
                 throw new IllegalArgumentException("Description cannot be blank");
@@ -92,21 +117,26 @@ public class ClassServiceImpl implements ClassService {
             entity.setDescription(request.getDescription());
         }
 
-        // ===== STATUS =====
+        // ================= STATUS =================
         if (request.getStatus() != null) {
             entity.setStatus(request.getStatus());
         }
 
-        // ===== TEACHER =====
+        // ================= TEACHER =================
         if (request.getTeacherId() != null) {
+
             User teacher = userServiceDomain.getByUserId(request.getTeacherId());
 
-            if (classRepository.existsByTeacherId(request.getTeacherId())) {
-                throw new ClassRoomAlreadyExistsException("Teacher already assigned to another class");
+            boolean existing = classRepository
+                    .existsByTeacherId(request.getTeacherId());
+
+            if(existing){
+                throw new IllegalArgumentException("Teacher already sign with another class");
             }
 
             entity.setTeacher(teacher);
         }
+
         return mapEntityToResponse(classRepository.save(entity));
     }
 
@@ -132,6 +162,13 @@ public class ClassServiceImpl implements ClassService {
         return mapEntityToResponse(entity);
     }
 
+    @Override
+    public ClassResponse getByTeacherId(Long id) {
+        ClassEntity entity = classRepository.findByTeacher_Id(id)
+                .orElseThrow(() -> new UserNotFoundException("Teacher not found with id:" + id));
+        return mapEntityToResponse(entity);
+    }
+
     // ================= GET ALL =================
 
     @Override
@@ -146,15 +183,11 @@ public class ClassServiceImpl implements ClassService {
     @Override
     public Page<ClassResponse> search(ClassSearchRequest request, Pageable pageable) {
 
-        String name = request.getName();
-
-        // FIX: KHÔNG CONCAT SQL → xử lý Java
-        if (name != null && !name.isBlank()) {
-            name = "%" + name.toLowerCase() + "%";
+        if(request.getName() == null){
+            request.setName("");
         }
-
         return classRepository.searchClasses(
-                name,
+                request.getName(),
                 request.getAge(),
                 request.getStatus(),
                 request.getTeacherId(),
@@ -166,7 +199,7 @@ public class ClassServiceImpl implements ClassService {
 
     private ClassResponse mapEntityToResponse(ClassEntity entity) {
 
-        Long studentCount = studentRepository.countByClassEntity_Id(entity.getId());
+        Long studentCount = studentRepository.countByClassEntityIdAndStatus(entity.getId(),"ACTIVE");
 
         TeacherResponse teacher = null;
 
@@ -216,5 +249,16 @@ public class ClassServiceImpl implements ClassService {
                 .teacher(teacher)
                 .currentStudents(p.getCurrentStudents())
                 .build();
+    }
+
+    private void validateAgeForKindergarten(LocalDate dob) {
+
+        int age = java.time.Period.between(dob, java.time.LocalDate.now()).getYears();
+
+        if (age < 1 || age > 6) {
+            throw new InvalidAgeException(
+                    "Student age must be between 1 and 6 years old"
+            );
+        }
     }
 }

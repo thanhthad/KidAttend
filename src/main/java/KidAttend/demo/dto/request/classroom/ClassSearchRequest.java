@@ -17,5 +17,6 @@ public class ClassSearchRequest {
 
     private ClassStatus status;
 
+    @Min(value = 1, message = "Id must be >= 1")
     private Long teacherId;
 }

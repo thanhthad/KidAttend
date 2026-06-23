@@ -15,12 +15,12 @@ public class CreateClassRequest {
 
     @NotNull(message = "Age is required")
     @Min(value = 1, message = "Age must be >= 1")
-    @Max(value = 100, message = "Age must be <= 100")
+    @Max(value = 6, message = "Age must be <= 6")
     private Integer age;
 
     @NotNull(message = "Capacity is required")
     @Min(value = 1, message = "Capacity must be >= 1")
-    @Max(value = 200, message = "Capacity must be <= 200")
+    @Max(value = 50, message = "Capacity must be <= 50")
     private Integer capacity;
 
     @Min(value = 1, message = "TeacherId must be >= 1")
