@@ -18,13 +18,6 @@ public class CreateAttendanceRequest {
     @PastOrPresent(message = "attendanceDate cannot be in the future")
     private LocalDate attendanceDate;
 
-    @NotBlank(message = "status must not be blank")
-    @Pattern(
-            regexp = "PRESENT|ABSENT",
-            message = "status must be PRESENT or ABSENT"
-    )
-    private String status;
-
     @Size(max = 255, message = "note must not exceed 255 characters")
     private String note;
 

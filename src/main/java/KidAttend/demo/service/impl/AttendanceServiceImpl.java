@@ -5,7 +5,7 @@ import KidAttend.demo.dto.request.attendance.UpdateAttendanceRequest;
 import KidAttend.demo.dto.response.attendance.*;
 import KidAttend.demo.dto.response.student.StudentResponse;
 import KidAttend.demo.entity.Attendance;
-import KidAttend.demo.entity.ClassEntity;
+import KidAttend.demo.entity.AttendanceSetting;
 import KidAttend.demo.entity.Student;
 import KidAttend.demo.entity.User;
 import KidAttend.demo.exception.attendance.AttendanceAlreadyExistsException;
@@ -13,6 +13,7 @@ import KidAttend.demo.exception.attendance.AttendanceNotFoundException;
 import KidAttend.demo.exception.classroom.ClassRoomNotFoundException;
 import KidAttend.demo.exception.student.StudentNotFoundException;
 import KidAttend.demo.repository.AttendanceRepository;
+import KidAttend.demo.repository.AttendanceSettingRepository;
 import KidAttend.demo.repository.ClassRepository;
 import KidAttend.demo.repository.StudentRepository;
 import KidAttend.demo.repository.projection.*;
@@ -26,6 +27,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.List;
 
 @Service
@@ -36,36 +38,61 @@ public class AttendanceServiceImpl implements AttendanceService {
     private final StudentRepository studentRepository;
     private final UserServiceDomain userServiceDomain;
     private final ClassRepository classRepository;
+    private AttendanceSettingRepository attendanceSettingRepository;
 
-    @Override
     @Transactional
     public AttendanceResponse create(CreateAttendanceRequest request) {
-        if(attendanceRepository.existsByStudent_IdAndAttendanceDate(
-                request.getStudentId(),request.getAttendanceDate()
-        )){
+
+        if (attendanceRepository.existsByStudent_IdAndAttendanceDate(
+                request.getStudentId(), request.getAttendanceDate())) {
             throw new AttendanceAlreadyExistsException("Student already attend today");
         }
+
+        AttendanceSetting setting = attendanceSettingRepository.findById(1L)
+                .orElseThrow(() -> new RuntimeException("Attendance setting not configured"));
+
+        LocalTime now = LocalTime.now();
+
+        LocalTime start = setting.getStartTime();
+        LocalTime end = setting.getEndTime();
+        LocalTime finalLimit = end.plusMinutes(setting.getAllowLateMinutes());
+
+        if (now.isAfter(end)) {
+            throw new IllegalArgumentException("Attendance time is over");
+        }
+
+        String status;
+
+        if (now.isBefore(finalLimit)) {
+            status = "PRESENT";
+        } else {
+            status = "ABSENT";
+        }
+
         User user = userServiceDomain.getByUserId(request.getCreatedBy());
-        Student student = studentRepository.findById(request.getStudentId()).orElseThrow(
-                () -> new StudentNotFoundException("Student not found with id:" + request.getStudentId())
-        );
+
+        Student student = studentRepository.findById(request.getStudentId())
+                .orElseThrow(() ->
+                        new StudentNotFoundException("Student not found with id:" + request.getStudentId()));
+
         Attendance saved = Attendance.builder()
                 .student(student)
                 .note(request.getNote())
-                .status(request.getStatus())
+                .status(status)
                 .attendanceDate(request.getAttendanceDate())
                 .createdBy(user)
                 .build();
 
         attendanceRepository.save(saved);
+
         return AttendanceResponse.builder()
                 .id(saved.getId())
-                .studentId(request.getStudentId())
+                .studentId(student.getId())
                 .studentName(student.getFullName())
-                .attendanceDate(request.getAttendanceDate())
-                .status(request.getStatus())
-                .note(request.getNote())
-                .createdBy(request.getCreatedBy())
+                .attendanceDate(saved.getAttendanceDate())
+                .status(saved.getStatus())
+                .note(saved.getNote())
+                .createdBy(user.getId())
                 .createdAt(saved.getCreatedAt())
                 .updatedAt(saved.getUpdatedAt())
                 .build();
@@ -79,6 +106,33 @@ public class AttendanceServiceImpl implements AttendanceService {
                 .orElseThrow(() ->
                         new AttendanceNotFoundException(
                                 "Attendance not found with id: " + id));
+
+        LocalDate today = LocalDate.now();
+
+        if (!attendance.getAttendanceDate().isEqual(today)) {
+            throw new IllegalArgumentException("Cannot update past attendance records");
+        }
+
+        AttendanceSetting setting = attendanceSettingRepository.findById(1L)
+                .orElseThrow(() -> new RuntimeException("Attendance setting not configured"));
+
+        LocalTime now = LocalTime.now();
+
+        LocalTime start = setting.getStartTime();
+        LocalTime end = setting.getEndTime();
+        LocalTime finalLimit = end.plusMinutes(setting.getAllowLateMinutes());
+
+        if (now.isAfter(end)) {
+            throw new IllegalArgumentException("Attendance time is over");
+        }
+
+        String status;
+
+        if (now.isBefore(finalLimit)) {
+            status = "PRESENT";
+        } else {
+            status = "ABSENT";
+        }
 
         attendance.setStatus(request.getStatus());
         attendance.setNote(request.getNote());

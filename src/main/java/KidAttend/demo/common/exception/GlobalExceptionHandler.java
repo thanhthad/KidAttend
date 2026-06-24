@@ -1,6 +1,8 @@
 package KidAttend.demo.common.exception;
 import KidAttend.demo.common.response.ApiResponse;
 import KidAttend.demo.common.response.ResponseData;
+import KidAttend.demo.exception.attendance.AttendanceAlreadyExistsException;
+import KidAttend.demo.exception.attendancesetting.AttendanceSettingNotFoundException;
 import KidAttend.demo.exception.classroom.ClassRoomAlreadyExistsException;
 import KidAttend.demo.exception.classroom.ClassRoomNotFoundException;
 import KidAttend.demo.exception.refreshtoken.InvalidRefreshTokenException;
@@ -105,6 +107,16 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
     public ResponseEntity<ApiResponse<Object>> handleTypeMismatch(MethodArgumentTypeMismatchException ex) {
         return ResponseData.fail("Invalid parameter type", HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(AttendanceSettingNotFoundException.class)
+    public ResponseEntity<ApiResponse<Object>> handleAttendanceNotFound(AttendanceSettingNotFoundException ex) {
+        return ResponseData.fail(ex.getMessage(), HttpStatus.NOT_FOUND);
+    }
+
+    @ExceptionHandler(AttendanceAlreadyExistsException.class)
+    public ResponseEntity<ApiResponse<Object>> handleAttendanceAlreadyExists(AttendanceAlreadyExistsException ex) {
+        return ResponseData.fail(ex.getMessage(), HttpStatus.CONFLICT);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
