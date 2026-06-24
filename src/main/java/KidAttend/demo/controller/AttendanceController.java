@@ -57,6 +57,90 @@ public class AttendanceController {
         );
     }
 
+    @GetMapping("/student/{studentId}/history")
+    public ResponseEntity<?> studentHistory(
+            @PathVariable Long studentId
+    ) {
+        List<StudentAttendanceHistoryResponse> response =
+                attendanceService.getStudentHistory(studentId);
+
+        return ResponseData.success(response, "OK", HttpStatus.OK);
+    }
+
+    @GetMapping("/class/history/{classId}")
+    public ResponseEntity<?> classHistory(
+            @PathVariable Long classId,
+            @RequestParam LocalDate fromDate,
+            @RequestParam LocalDate toDate,
+            Pageable pageable
+    ) {
+
+        Page<ClassAttendanceHistoryResponse> response =
+                attendanceService.getClassAttendanceHistory(classId, fromDate, toDate, pageable);
+
+        return ResponseData.success(response, "OK", HttpStatus.OK);
+    }
+
+    @GetMapping("/teacher/summary")
+    public ResponseEntity<?> teacherSummary(
+            @RequestParam Long teacherId,
+            @RequestParam LocalDate date
+    ) {
+        List<TeacherAttendanceSummaryResponse> response =
+                attendanceService.getTeacherAttendanceSummary(teacherId, date);
+
+        return ResponseData.success(response, "OK", HttpStatus.OK);
+    }
+
+    // ================= GET DATES BY CLASS =================
+    @GetMapping("/dates/class/{classId}")
+    public ResponseEntity<?> getDatesByClass(@PathVariable Long classId) {
+
+        List<AttendanceDateResponse> response =
+                attendanceService.getAttendanceDatesByClassId(classId);
+
+        return ResponseData.success(
+                response,
+                "Get attendance dates by class successfully",
+                HttpStatus.OK
+        );
+    }
+
+    // ================= STATUS SUMMARY BY CLASS =================
+    @GetMapping("/summary/class/{classId}")
+    public ResponseEntity<?> summaryByClass(
+            @PathVariable Long classId,
+            @RequestParam LocalDate date
+    ) {
+
+        List<AttendanceStatusSummaryResponse> response =
+                attendanceService.getStatusSummaryByDateAndClass(classId, date);
+
+        return ResponseData.success(
+                response,
+                "Get status summary by class successfully",
+                HttpStatus.OK
+        );
+    }
+
+
+    // ================= CLASS ATTENDANCE =================
+    @GetMapping("/class/{classId}")
+    public ResponseEntity<?> getClassAttendance(
+            @PathVariable Long classId,
+            @RequestParam LocalDate date
+    ) {
+
+        List<ClassAttendanceResponse> response =
+                attendanceService.getClassAttendance(classId, date);
+
+        return ResponseData.success(
+                response,
+                "Get class attendance successfully",
+                HttpStatus.OK
+        );
+    }
+
     // ================= DELETE =================
     @DeleteMapping("/{id}")
     public ResponseEntity<?> delete(@PathVariable Long id) {
@@ -84,29 +168,16 @@ public class AttendanceController {
         );
     }
 
-    // ================= GET DATES BY CLASS =================
-    @GetMapping("/dates/class/{classId}")
-    public ResponseEntity<?> getDatesByClass(@PathVariable Long classId) {
 
-        List<AttendanceDateResponse> response =
-                attendanceService.getAttendanceDatesByClassId(classId);
-
-        return ResponseData.success(
-                response,
-                "Get attendance dates by class successfully",
-                HttpStatus.OK
-        );
-    }
 
     // ================= GET BY DATE (DETAIL + PAGING) =================
     @GetMapping("/date")
     public ResponseEntity<?> getByDate(
-            @RequestParam LocalDate date,
-            Pageable pageable
+            @RequestParam LocalDate date
     ) {
 
-        Page<AttendanceDetailResponse> response =
-                attendanceService.getAttendanceByDate(date, pageable);
+        List<AttendanceDetailResponse> response =
+                attendanceService.getAttendanceByDate(date);
 
         return ResponseData.success(
                 response,
@@ -129,39 +200,8 @@ public class AttendanceController {
         );
     }
 
-    // ================= STATUS SUMMARY BY CLASS =================
-    @GetMapping("/summary/class/{classId}")
-    public ResponseEntity<?> summaryByClass(
-            @PathVariable Long classId,
-            @RequestParam LocalDate date
-    ) {
 
-        List<AttendanceStatusSummaryResponse> response =
-                attendanceService.getStatusSummaryByDateAndClass(classId, date);
 
-        return ResponseData.success(
-                response,
-                "Get status summary by class successfully",
-                HttpStatus.OK
-        );
-    }
-
-    // ================= CLASS ATTENDANCE =================
-    @GetMapping("/class/{classId}")
-    public ResponseEntity<?> getClassAttendance(
-            @PathVariable Long classId,
-            @RequestParam LocalDate date
-    ) {
-
-        List<ClassAttendanceResponse> response =
-                attendanceService.getClassAttendance(classId, date);
-
-        return ResponseData.success(
-                response,
-                "Get class attendance successfully",
-                HttpStatus.OK
-        );
-    }
 
     // ================= ATTENDANCE RATE =================
     @GetMapping("/rate")
@@ -177,29 +217,7 @@ public class AttendanceController {
         );
     }
 
-    // ================= NOT IMPLEMENTED YET =================
 
-    @GetMapping("/teacher/summary")
-    public ResponseEntity<?> teacherSummary(
-            @RequestParam Long teacherId,
-            @RequestParam LocalDate date
-    ) {
-        List<TeacherAttendanceSummaryResponse> response =
-                attendanceService.getTeacherAttendanceSummary(teacherId, date);
-
-        return ResponseData.success(response, "OK", HttpStatus.OK);
-    }
-
-    @GetMapping("/student/{studentId}/history")
-    public ResponseEntity<?> studentHistory(
-            @PathVariable Long studentId,
-            Pageable pageable
-    ) {
-        Page<StudentAttendanceHistoryResponse> response =
-                attendanceService.getStudentHistory(studentId, pageable);
-
-        return ResponseData.success(response, "OK", HttpStatus.OK);
-    }
 
     @GetMapping("/students/not-yet")
     public ResponseEntity<?> notYetAttendance(
@@ -234,19 +252,7 @@ public class AttendanceController {
         return ResponseData.success(response, "OK", HttpStatus.OK);
     }
 
-    @GetMapping("/class/history/{classId}")
-    public ResponseEntity<?> classHistory(
-            @PathVariable Long classId,
-            @RequestParam LocalDate fromDate,
-            @RequestParam LocalDate toDate,
-            Pageable pageable
-    ) {
 
-        Page<ClassAttendanceHistoryResponse> response =
-                attendanceService.getClassAttendanceHistory(classId, fromDate, toDate, pageable);
-
-        return ResponseData.success(response, "OK", HttpStatus.OK);
-    }
 
     @GetMapping("/student/{studentId}/statistic")
     public ResponseEntity<?> studentStatistic(@PathVariable Long studentId) {

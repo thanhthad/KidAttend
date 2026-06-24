@@ -45,10 +45,10 @@ public interface AttendanceRepository extends JpaRepository<Attendance, Long> {
             a.note as note
         FROM Attendance a
         WHERE a.student.id = :studentId
+        ORDER BY a.attendanceDate DESC
     """)
-    Page<StudentAttendanceHistoryProjection> getStudentHistory(
-            Long studentId,
-            Pageable pageable
+    List<StudentAttendanceHistoryProjection> getStudentHistory(
+            Long studentId
     );
 
     @Query("""
@@ -68,19 +68,19 @@ public interface AttendanceRepository extends JpaRepository<Attendance, Long> {
     // ======================================================
 
     @Query("""
-        SELECT
-            s.id as studentId,
-            s.fullName as studentName,
-            c.name as className,
-            a.status as status
-        FROM Attendance a
-        JOIN a.student s
-        JOIN s.classEntity c
-        WHERE a.attendanceDate = :date
-    """)
-    Page<AttendanceDetailProjection> getAttendanceByDate(
-            LocalDate date,
-            Pageable pageable
+    SELECT
+        s.id as studentId,
+        s.fullName as studentName,
+        c.name as className,
+        a.status as status
+    FROM Attendance a
+    JOIN a.student s
+    JOIN s.classEntity c
+    WHERE a.attendanceDate = :date
+    ORDER BY c.name ASC, s.fullName ASC
+""")
+    List<AttendanceDetailProjection> getAttendanceByDate(
+            LocalDate date
     );
 
     @Query("""
@@ -121,13 +121,16 @@ public interface AttendanceRepository extends JpaRepository<Attendance, Long> {
 
     @Query("""
         SELECT
+            c.name as className,
             s.fullName as studentName,
             a.status as status,
             a.note as note
         FROM Attendance a
         JOIN a.student s
+        JOIN s.classEntity c
         WHERE a.attendanceDate = :date
         AND a.status = :status
+        ORDER BY c.name ASC, s.fullName ASC
     """)
     Page<AttendanceFilterProjection> filterByStatus(
             LocalDate date,
@@ -144,6 +147,7 @@ public interface AttendanceRepository extends JpaRepository<Attendance, Long> {
         JOIN Attendance a ON a.student.id = s.id
         WHERE s.classEntity.id = :classId
         AND a.attendanceDate BETWEEN :fromDate AND :toDate
+        ORDER BY a.attendanceDate ASC
     """)
     Page<ClassAttendanceHistoryProjection> getClassAttendanceHistory(
             Long classId,

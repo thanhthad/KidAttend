@@ -15,15 +15,13 @@ import KidAttend.demo.exception.student.StudentNotFoundException;
 import KidAttend.demo.repository.AttendanceRepository;
 import KidAttend.demo.repository.ClassRepository;
 import KidAttend.demo.repository.StudentRepository;
-import KidAttend.demo.repository.projection.AttendanceDateProjection;
-import KidAttend.demo.repository.projection.AttendanceStatusSummaryProjection;
-import KidAttend.demo.repository.projection.ClassAttendanceProjection;
-import KidAttend.demo.repository.projection.ClassAttendanceRateProjection;
+import KidAttend.demo.repository.projection.*;
 import KidAttend.demo.service.AttendanceService;
 import KidAttend.demo.service.UserServiceDomain;
 import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
@@ -139,8 +137,19 @@ public class AttendanceServiceImpl implements AttendanceService {
     }
 
     @Override
-    public Page<AttendanceDetailResponse> getAttendanceByDate(LocalDate date, Pageable pageable) {
-        return null;
+    public List<AttendanceDetailResponse> getAttendanceByDate(LocalDate date) {
+
+        List<AttendanceDetailProjection> result =
+                attendanceRepository.getAttendanceByDate(date);
+
+        return result.stream()
+                .map(p -> new AttendanceDetailResponse(
+                        p.getStudentId(),
+                        p.getStudentName(),
+                        p.getClassName(),
+                        p.getStatus()
+                ))
+                .toList();
     }
 
     @Override
@@ -182,8 +191,27 @@ public class AttendanceServiceImpl implements AttendanceService {
 
 
     @Override
-    public List<TeacherAttendanceSummaryResponse> getTeacherAttendanceSummary(Long teacherId, LocalDate date) {
-        return List.of();
+    public List<TeacherAttendanceSummaryResponse> getTeacherAttendanceSummary(
+            Long teacherId,
+            LocalDate date
+    ) {
+
+        User teacher = userServiceDomain.getByUserId(teacherId);
+
+        List<TeacherAttendanceSummaryProjection> result =
+                attendanceRepository.getTeacherAttendanceSummary(
+                        teacherId,
+                        date
+                );
+
+        return result.stream()
+                .map(p -> new TeacherAttendanceSummaryResponse(
+                        p.getClassName(),
+                        p.getTotalAttendance(),
+                        p.getPresent(),
+                        p.getAbsent()
+                ))
+                .toList();
     }
 
     @Override
@@ -216,18 +244,72 @@ public class AttendanceServiceImpl implements AttendanceService {
     }
 
     @Override
-    public Page<StudentAttendanceHistoryResponse> getStudentHistory(Long studentId, Pageable pageable) {
-        return null;
+    public List<StudentAttendanceHistoryResponse> getStudentHistory(
+            Long studentId
+    ) {
+
+        if (!studentRepository.existsById(studentId)) {
+            throw new StudentNotFoundException(
+                    "Student not found with id: " + studentId
+            );
+        }
+
+        List<StudentAttendanceHistoryProjection> result =
+                attendanceRepository.getStudentHistory(studentId);
+
+        return result.stream()
+                .map(p -> new StudentAttendanceHistoryResponse(
+                        p.getAttendanceDate(),
+                        p.getStatus(),
+                        p.getNote()
+                ))
+                .toList();
     }
 
     @Override
-    public Page<StudentResponse> getStudentsNotYetAttendance(LocalDate date, Pageable pageable) {
-        return null;
+    public Page<StudentResponse> getStudentsNotYetAttendance(
+            LocalDate date,
+            Pageable pageable
+    ) {
+
+        Page<Student> students =
+                attendanceRepository.getStudentsNotYetAttendance(
+                        date,
+                        pageable
+                );
+
+        return students.map(student ->
+                StudentResponse.builder()
+                        .id(student.getId())
+                        .classId(student.getClassEntity().getId())
+                        .className(student.getClassEntity().getName())
+                        .fullName(student.getFullName())
+                        .gender(student.getGender())
+                        .dateOfBirth(student.getDateOfBirth())
+                        .parentName(student.getParentName())
+                        .parentPhone(student.getParentPhone())
+                        .parentEmail(student.getParentEmail())
+                        .address(student.getAddress())
+                        .status(student.getStatus())
+                        .build()
+        );
     }
 
     @Override
     public List<TopAbsentStudentResponse> getTopAbsentStudents() {
-        return List.of();
+
+        List<TopAbsentStudentProjection> result =
+                attendanceRepository.findTopAbsentStudents(
+                        PageRequest.of(0, 10)
+                );
+
+        return result.stream()
+                .map(p -> new TopAbsentStudentResponse(
+                        p.getStudentId(),
+                        p.getStudentName(),
+                        p.getAbsentDays()
+                ))
+                .toList();
     }
 
     @Override
@@ -248,13 +330,54 @@ public class AttendanceServiceImpl implements AttendanceService {
     }
 
     @Override
-    public Page<AttendanceFilterResponse> filterByStatus(LocalDate date, String status, Pageable pageable) {
-        return null;
+    public Page<AttendanceFilterResponse> filterByStatus(
+            LocalDate date,
+            String status,
+            Pageable pageable
+    ) {
+
+        Page<AttendanceFilterProjection> result =
+                attendanceRepository.filterByStatus(
+                        date,
+                        status,
+                        pageable
+                );
+
+        return result.map(p -> new AttendanceFilterResponse(
+                p.getClassName(),
+                p.getStudentName(),
+                p.getStatus(),
+                p.getNote()
+        ));
     }
 
     @Override
-    public Page<ClassAttendanceHistoryResponse> getClassAttendanceHistory(Long classId, LocalDate fromDate, LocalDate toDate, Pageable pageable) {
-        return null;
+    public Page<ClassAttendanceHistoryResponse> getClassAttendanceHistory(
+            Long classId,
+            LocalDate fromDate,
+            LocalDate toDate,
+            Pageable pageable
+    ) {
+
+        if (!classRepository.existsById(classId)) {
+            throw new ClassRoomNotFoundException(
+                    "Class not found with id: " + classId
+            );
+        }
+
+        Page<ClassAttendanceHistoryProjection> result =
+                attendanceRepository.getClassAttendanceHistory(
+                        classId,
+                        fromDate,
+                        toDate,
+                        pageable
+                );
+
+        return result.map(p -> new ClassAttendanceHistoryResponse(
+                p.getStudentName(),
+                p.getAttendanceDate(),
+                p.getStatus()
+        ));
     }
 
     @Override
