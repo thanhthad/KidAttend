@@ -60,8 +60,29 @@ public class StudentController {
     }
 
     @GetMapping("/class/{classId}")
-    public List<StudentResponse> getAllByClass(@PathVariable Long classId) {
-        return studentService.getAllByClassId(classId);
+    public ResponseEntity<?> getAllByClass(@PathVariable Long classId) {
+
+        List<StudentResponse> response =
+                studentService.getAllByClassId(classId);
+
+        return ResponseData.success(
+                response,
+                "Get students successfully",
+                HttpStatus.OK
+        );
+    }
+
+    @GetMapping("/class/me")
+    public ResponseEntity<?> getAllByMe() {
+
+        List<StudentResponse> response =
+                studentService.getAllByMe();
+
+        return ResponseData.success(
+                response,
+                "Get students successfully",
+                HttpStatus.OK
+        );
     }
 
     // ================= CREATE =================

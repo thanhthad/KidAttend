@@ -13,6 +13,7 @@ import KidAttend.demo.exception.student.StudentAlreadyExistsException;
 import KidAttend.demo.exception.student.StudentNotFoundException;
 import KidAttend.demo.repository.ClassRepository;
 import KidAttend.demo.repository.StudentRepository;
+import KidAttend.demo.security.userdetails.SecurityUtils;
 import KidAttend.demo.service.StudentService;
 import KidAttend.demo.specification.StudentSpecification;
 import lombok.RequiredArgsConstructor;
@@ -166,6 +167,21 @@ public class StudentServiceImpl implements StudentService {
     @Override
     public List<StudentResponse> getAllByClassId(Long classId) {
 
+        ClassEntity classEntity = getClassById(classId);
+
+        List<Student> students = studentRepository.findAllByClassEntity_IdOrderByFullNameAsc(classEntity.getId());
+
+        return students.stream()
+                .map(this::mapToResponse)
+                .toList();
+    }
+
+    @Override
+    public List<StudentResponse> getAllByMe() {
+        Long userId = SecurityUtils.getCurrentUserId();
+        Long classId = classRepository.findByTeacher_Id(userId).orElseThrow(
+                () -> new ClassRoomNotFoundException("Teacher didn't sign class")
+        ).getId();
         ClassEntity classEntity = getClassById(classId);
 
         List<Student> students = studentRepository.findAllByClassEntity_IdOrderByFullNameAsc(classEntity.getId());
