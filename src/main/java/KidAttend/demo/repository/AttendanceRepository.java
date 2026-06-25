@@ -7,6 +7,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -14,9 +15,32 @@ import java.util.Optional;
 
 public interface AttendanceRepository extends JpaRepository<Attendance, Long> {
 
-    // ======================================================
-    // 🤝 SHARED (CORE - USED BY SERVICE / ADMIN / TEACHER)
-    // ======================================================
+    @Query("""
+    SELECT COUNT(a)
+    FROM Attendance a
+    WHERE a.attendanceDate = :date
+      AND a.student.classEntity.id = :classId
+      AND a.createdBy.id = :teacherId
+""")
+    long countByClassAndDateAndTeacher(
+            @Param("classId") Long classId,
+            @Param("date") LocalDate date,
+            @Param("teacherId") Long teacherId
+    );
+
+    @Query("""
+    SELECT a
+    FROM Attendance a
+    WHERE a.attendanceDate = :date
+      AND a.student.classEntity.id = :classId
+      AND a.createdBy.id = :teacherId
+    ORDER BY a.student.fullName
+""")
+    List<Attendance> findByClassAndDateAndTeacher(
+            @Param("classId") Long classId,
+            @Param("date") LocalDate date,
+            @Param("teacherId") Long teacherId
+    );
 
     Optional<Attendance> findByStudent_IdAndAttendanceDate(Long studentId, LocalDate attendanceDate);
 

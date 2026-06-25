@@ -10,8 +10,10 @@ import KidAttend.demo.exception.user.PhoneAlreadyExistsException;
 import KidAttend.demo.exception.user.UserAlreadyExistsException;
 import KidAttend.demo.exception.user.UserNotFoundException;
 import KidAttend.demo.repository.UserRepository;
+import KidAttend.demo.security.userdetails.SecurityUtils;
 import KidAttend.demo.service.UserService;
 import lombok.RequiredArgsConstructor;
+import org.apache.catalina.security.SecurityUtil;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -53,6 +55,15 @@ public class UserServiceImpl implements UserService {
         return mapToResponse(user);
     }
 
+    @Override
+    public UserResponse findByMe() {
+        Long id = SecurityUtils.getCurrentUserId();
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new UserNotFoundException("User not found"));
+
+        return mapToResponse(user);
+    }
+
     // =========================
     @Override
     public UserResponse findByEmail(String email) {
@@ -63,8 +74,8 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public UserResponse changePassword(Long userId,UpdateUserPassword req) {
-
+    public UserResponse changePassword(UpdateUserPassword req) {
+        Long userId = SecurityUtils.getCurrentUserId();
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new UserNotFoundException("User not found"));
 
@@ -78,7 +89,8 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public UserResponse updateUserInfo(Long userId,UpdateUserInfo req) {
+    public UserResponse updateUserInfo(UpdateUserInfo req) {
+        Long userId = SecurityUtils.getCurrentUserId();
 
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new UserNotFoundException("User not found"));

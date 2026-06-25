@@ -87,8 +87,21 @@ public class UserController {
         );
     }
 
+    // ================= GET BY JWTTOKEN =================
+    @GetMapping("/me")
+    public ResponseEntity<?> getUserByMe() {
+
+        UserResponse response = userService.findByMe();
+
+        return ResponseData.success(
+                response,
+                "Get user successfully",
+                HttpStatus.OK
+        );
+    }
+
     // ================= GET BY EMAIL =================
-    @GetMapping("/email")
+    @GetMapping("/by-email")
     public ResponseEntity<?> getUserByEmail(@RequestParam String email) {
 
         UserResponse response = userService.findByEmail(email);
@@ -101,14 +114,13 @@ public class UserController {
     }
 
     // ================= UPDATE USER INFO =================
-    @PutMapping("/{id}")
+    @PutMapping
     public ResponseEntity<?> updateUserInfo(
-            @PathVariable Long id,
             @Valid @RequestBody UpdateUserInfo request
     ) {
 
         UserResponse response =
-                userService.updateUserInfo(id, request);
+                userService.updateUserInfo(request);
 
         return ResponseData.success(
                 response,
@@ -118,14 +130,13 @@ public class UserController {
     }
 
     // ================= CHANGE PASSWORD =================
-    @PatchMapping("/{id}/password")
+    @PatchMapping("/password")
     public ResponseEntity<?> changePassword(
-            @PathVariable Long id,
             @Valid @RequestBody UpdateUserPassword request
     ) {
 
         UserResponse response =
-                userService.changePassword(id, request);
+                userService.changePassword( request);
 
         return ResponseData.success(
                 response,

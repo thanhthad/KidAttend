@@ -16,6 +16,8 @@ public interface ClassService {
 
     ClassResponse getByTeacherId(Long id);
 
+    ClassResponse getByClassByMe();
+
     Page<ClassResponse> getAll(Pageable pageable);
 
     Page<ClassResponse> search(ClassSearchRequest request, Pageable pageable);

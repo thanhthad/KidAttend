@@ -20,8 +20,4 @@ public class CreateAttendanceRequest {
 
     @Size(max = 255, message = "note must not exceed 255 characters")
     private String note;
-
-    @NotNull(message = "createdBy must not be null")
-    @Positive(message = "createdBy must be a positive number")
-    private Long createdBy;
 }

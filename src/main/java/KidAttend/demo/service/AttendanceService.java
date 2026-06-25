@@ -12,7 +12,7 @@ import java.util.List;
 
 public interface AttendanceService {
 
-    AttendanceResponse create(CreateAttendanceRequest request);
+    List<AttendanceResponse> init();
 
     AttendanceResponse update(
             Long id,

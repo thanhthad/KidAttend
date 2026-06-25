@@ -17,6 +17,7 @@ import KidAttend.demo.repository.AttendanceSettingRepository;
 import KidAttend.demo.repository.ClassRepository;
 import KidAttend.demo.repository.StudentRepository;
 import KidAttend.demo.repository.projection.*;
+import KidAttend.demo.security.userdetails.SecurityUtils;
 import KidAttend.demo.service.AttendanceService;
 import KidAttend.demo.service.UserServiceDomain;
 import jakarta.transaction.Transactional;
@@ -40,62 +41,74 @@ public class AttendanceServiceImpl implements AttendanceService {
     private final ClassRepository classRepository;
     private AttendanceSettingRepository attendanceSettingRepository;
 
+    @Override
     @Transactional
-    public AttendanceResponse create(CreateAttendanceRequest request) {
+    public List<AttendanceResponse> init() {
 
-        if (attendanceRepository.existsByStudent_IdAndAttendanceDate(
-                request.getStudentId(), request.getAttendanceDate())) {
-            throw new AttendanceAlreadyExistsException("Student already attend today");
-        }
+        Long userId = SecurityUtils.getCurrentUserId();
 
-        AttendanceSetting setting = attendanceSettingRepository.findById(1L)
-                .orElseThrow(() -> new RuntimeException("Attendance setting not configured"));
-
-        LocalTime now = LocalTime.now();
-
-        LocalTime start = setting.getStartTime();
-        LocalTime end = setting.getEndTime();
-        LocalTime finalLimit = end.plusMinutes(setting.getAllowLateMinutes());
-
-        if (now.isAfter(end)) {
-            throw new IllegalArgumentException("Attendance time is over");
-        }
-
-        String status;
-
-        if (now.isBefore(finalLimit)) {
-            status = "PRESENT";
-        } else {
-            status = "ABSENT";
-        }
-
-        User user = userServiceDomain.getByUserId(request.getCreatedBy());
-
-        Student student = studentRepository.findById(request.getStudentId())
+        Long classId = classRepository.findByTeacher_Id(userId)
                 .orElseThrow(() ->
-                        new StudentNotFoundException("Student not found with id:" + request.getStudentId()));
+                        new ClassRoomNotFoundException("Teacher dont have classroom"))
+                .getId();
 
-        Attendance saved = Attendance.builder()
-                .student(student)
-                .note(request.getNote())
-                .status(status)
-                .attendanceDate(request.getAttendanceDate())
-                .createdBy(user)
-                .build();
+        LocalDate today = LocalDate.now();
 
-        attendanceRepository.save(saved);
+        long count = attendanceRepository.countByClassAndDateAndTeacher(
+                classId,
+                today,
+                userId
+        );
 
-        return AttendanceResponse.builder()
-                .id(saved.getId())
-                .studentId(student.getId())
-                .studentName(student.getFullName())
-                .attendanceDate(saved.getAttendanceDate())
-                .status(saved.getStatus())
-                .note(saved.getNote())
-                .createdBy(user.getId())
-                .createdAt(saved.getCreatedAt())
-                .updatedAt(saved.getUpdatedAt())
-                .build();
+        if (count > 0) {
+
+            return attendanceRepository
+                    .findByClassAndDateAndTeacher(classId, today, userId)
+                    .stream()
+                    .map(attendance -> AttendanceResponse.builder()
+                            .id(attendance.getId())
+                            .studentId(attendance.getStudent().getId())
+                            .studentName(attendance.getStudent().getFullName())
+                            .attendanceDate(attendance.getAttendanceDate())
+                            .status(attendance.getStatus())
+                            .note(attendance.getNote())
+                            .createdBy(attendance.getCreatedBy().getId())
+                            .createdAt(attendance.getCreatedAt())
+                            .updatedAt(attendance.getUpdatedAt())
+                            .build())
+                    .toList();
+        }
+
+        User teacher = userServiceDomain.getByUserId(userId);
+
+        List<Student> students =
+                studentRepository.findAllByClassEntity_IdOrderByFullNameAsc(classId);
+
+        List<Attendance> attendances = students.stream()
+                .map(student -> Attendance.builder()
+                        .student(student)
+                        .attendanceDate(today)
+                        .status("ABSENT")
+                        .note(null)
+                        .createdBy(teacher)
+                        .build())
+                .toList();
+
+        attendanceRepository.saveAll(attendances);
+
+        return attendances.stream()
+                .map(attendance -> AttendanceResponse.builder()
+                        .id(attendance.getId())
+                        .studentId(attendance.getStudent().getId())
+                        .studentName(attendance.getStudent().getFullName())
+                        .attendanceDate(attendance.getAttendanceDate())
+                        .status(attendance.getStatus())
+                        .note(attendance.getNote())
+                        .createdBy(attendance.getCreatedBy().getId())
+                        .createdAt(attendance.getCreatedAt())
+                        .updatedAt(attendance.getUpdatedAt())
+                        .build())
+                .toList();
     }
 
     @Override

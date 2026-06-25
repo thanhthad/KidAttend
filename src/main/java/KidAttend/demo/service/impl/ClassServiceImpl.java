@@ -11,6 +11,7 @@ import KidAttend.demo.exception.user.UserNotFoundException;
 import KidAttend.demo.repository.projection.ClassProjection;
 import KidAttend.demo.repository.ClassRepository;
 import KidAttend.demo.repository.StudentRepository;
+import KidAttend.demo.security.userdetails.SecurityUtils;
 import KidAttend.demo.service.ClassService;
 import KidAttend.demo.service.UserServiceDomain;
 import lombok.RequiredArgsConstructor;
@@ -164,6 +165,14 @@ public class ClassServiceImpl implements ClassService {
 
     @Override
     public ClassResponse getByTeacherId(Long id) {
+        ClassEntity entity = classRepository.findByTeacher_Id(id)
+                .orElseThrow(() -> new UserNotFoundException("Teacher not found with id:" + id));
+        return mapEntityToResponse(entity);
+    }
+
+    @Override
+    public ClassResponse getByClassByMe() {
+        Long id = SecurityUtils.getCurrentUserId();
         ClassEntity entity = classRepository.findByTeacher_Id(id)
                 .orElseThrow(() -> new UserNotFoundException("Teacher not found with id:" + id));
         return mapEntityToResponse(entity);

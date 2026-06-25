@@ -28,11 +28,11 @@ public class AttendanceController {
 
     private final AttendanceService attendanceService;
 
-    // ================= CREATE =================
+    // ================= Init =================
     @PostMapping
-    public ResponseEntity<?> create(@RequestBody @Valid CreateAttendanceRequest request) {
+    public ResponseEntity<?> init() {
 
-        AttendanceResponse response = attendanceService.create(request);
+        List<AttendanceResponse> response = attendanceService.init();
 
         return ResponseData.success(
                 response,

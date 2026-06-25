@@ -86,6 +86,20 @@ public class ClassController {
         );
     }
 
+    // ================= GET CLASS BY TEACHERID =================
+    @GetMapping("/teacher/me")
+    public ResponseEntity<?> getClassByMe() {
+
+        ClassResponse response =
+                classService.getByClassByMe();
+
+        return ResponseData.success(
+                response,
+                "Get class successfully",
+                HttpStatus.OK
+        );
+    }
+
     // ================= CREATE CLASS =================
     @PostMapping
     public ResponseEntity<?> createClass(

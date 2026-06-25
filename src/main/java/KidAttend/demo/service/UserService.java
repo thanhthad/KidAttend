@@ -19,11 +19,13 @@ public interface UserService {
 
     UserResponse findById(Long id);
 
+    UserResponse findByMe();
+
     UserResponse findByEmail(String email);
 
-    UserResponse changePassword(Long userId ,UpdateUserPassword updateUserPassword);
+    UserResponse changePassword(UpdateUserPassword updateUserPassword);
 
-    UserResponse updateUserInfo(Long userId ,UpdateUserInfo updateUserInfo);
+    UserResponse updateUserInfo(UpdateUserInfo updateUserInfo);
 
     void deleteUser(Long id);
 
