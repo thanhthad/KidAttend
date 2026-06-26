@@ -10,6 +10,7 @@ import KidAttend.demo.entity.Student;
 import KidAttend.demo.entity.User;
 import KidAttend.demo.exception.attendance.AttendanceAlreadyExistsException;
 import KidAttend.demo.exception.attendance.AttendanceNotFoundException;
+import KidAttend.demo.exception.attendancesetting.AttendanceSettingNotFoundException;
 import KidAttend.demo.exception.classroom.ClassRoomNotFoundException;
 import KidAttend.demo.exception.student.StudentNotFoundException;
 import KidAttend.demo.repository.AttendanceRepository;
@@ -28,8 +29,14 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Service
 @AllArgsConstructor
@@ -113,6 +120,76 @@ public class AttendanceServiceImpl implements AttendanceService {
 
     @Override
     @Transactional
+    public List<AttendanceResponse> batchUpdate(List<UpdateAttendanceRequest> requests) {
+
+        if (requests == null || requests.isEmpty()) {
+            throw new AttendanceNotFoundException("Attendance Not Found");
+        }
+
+        LocalDate today = LocalDate.now();
+
+        AttendanceSetting setting = attendanceSettingRepository.findById(1L)
+                .orElseThrow(() ->
+                        new AttendanceSettingNotFoundException("Attendance setting not configured"));
+
+        if (LocalTime.now().isAfter(setting.getEndTime())) {
+            throw new IllegalArgumentException("Attendance time is over");
+        }
+
+        List<Long> attendanceIds = requests.stream()
+                .map(UpdateAttendanceRequest::getAttendanceId)
+                .toList();
+
+        Map<Long, Attendance> attendanceMap = attendanceRepository
+                .findAllById(attendanceIds)
+                .stream()
+                .collect(Collectors.toMap(
+                        Attendance::getId,
+                        Function.identity()
+                ));
+
+        List<AttendanceResponse> responses = new ArrayList<>();
+
+        for (UpdateAttendanceRequest request : requests) {
+
+            Attendance attendance = attendanceMap.get(request.getAttendanceId());
+
+            if (attendance == null) {
+                throw new AttendanceNotFoundException(
+                        "Attendance not found with id: "
+                                + request.getAttendanceId());
+            }
+
+            if (!attendance.getAttendanceDate().isEqual(today)) {
+                throw new IllegalArgumentException(
+                        "Cannot update past attendance records");
+            }
+
+            attendance.setStatus(request.getStatus());
+            attendance.setNote(request.getNote());
+            attendance.setUpdatedAt(LocalDateTime.now());
+
+            responses.add(
+                    AttendanceResponse.builder()
+                            .id(attendance.getId())
+                            .studentId(attendance.getStudent().getId())
+                            .studentName(attendance.getStudent().getFullName())
+                            .attendanceDate(attendance.getAttendanceDate())
+                            .status(attendance.getStatus())
+                            .note(attendance.getNote())
+                            .createdBy(attendance.getCreatedBy().getId())
+                            .createdAt(attendance.getCreatedAt())
+                            .updatedAt(attendance.getUpdatedAt())
+                            .build()
+            );
+        }
+
+        return responses;
+    }
+
+
+    @Override
+    @Transactional
     public AttendanceResponse update(Long id, UpdateAttendanceRequest request) {
 
         Attendance attendance = attendanceRepository.findById(id)
@@ -137,14 +214,6 @@ public class AttendanceServiceImpl implements AttendanceService {
 
         if (now.isAfter(end)) {
             throw new IllegalArgumentException("Attendance time is over");
-        }
-
-        String status;
-
-        if (now.isBefore(finalLimit)) {
-            status = "PRESENT";
-        } else {
-            status = "ABSENT";
         }
 
         attendance.setStatus(request.getStatus());
@@ -185,38 +254,34 @@ public class AttendanceServiceImpl implements AttendanceService {
     }
 
     @Override
-    public List<AttendanceDateResponse> getAttendanceDatesByClassId(Long classId) {
+    public Page<AttendanceDateResponse> getAttendanceDatesByClassId(Pageable pageable) {
 
-        if (!classRepository.existsById(classId)) {
-            throw new ClassRoomNotFoundException(
-                    "Class not found with id: " + classId
-            );
-        }
+        Long userId = SecurityUtils.getCurrentUserId();
 
-        List<AttendanceDateProjection> projections =
-                attendanceRepository.getAttendanceDatesByClassId(classId);
+        Long classId = classRepository.findByTeacher_Id(userId)
+                .orElseThrow(() ->
+                        new ClassRoomNotFoundException("Teacher dont have classroom"))
+                .getId();
 
-        return projections.stream()
-                .map(p -> new AttendanceDateResponse(
-                        p.getAttendanceDate()
-                ))
-                .toList();
+        return attendanceRepository
+                .getAttendanceDatesByClassId(classId, pageable)
+                .map(p -> new AttendanceDateResponse(p.getAttendanceDate()));
     }
 
     @Override
-    public List<AttendanceDetailResponse> getAttendanceByDate(LocalDate date) {
+    public Page<AttendanceDetailResponse> getAttendanceByDate(
+            LocalDate date,
+            Pageable pageable
+    ) {
 
-        List<AttendanceDetailProjection> result =
-                attendanceRepository.getAttendanceByDate(date);
-
-        return result.stream()
+        return attendanceRepository
+                .getAttendanceByDate(date, pageable)
                 .map(p -> new AttendanceDetailResponse(
                         p.getStudentId(),
                         p.getStudentName(),
                         p.getClassName(),
                         p.getStatus()
-                ))
-                .toList();
+                ));
     }
 
     @Override
@@ -282,13 +347,35 @@ public class AttendanceServiceImpl implements AttendanceService {
     }
 
     @Override
-    public List<ClassAttendanceResponse> getClassAttendance(Long classId, LocalDate date) {
+    public List<TeacherAttendanceSummaryResponse> getTeacherAttendanceSummaryMe(LocalDate date) {
 
-        if (!classRepository.existsById(classId)) {
-            throw new ClassRoomNotFoundException(
-                    "Class not found with id: " + classId
-            );
-        }
+        Long userId = SecurityUtils.getCurrentUserId();
+
+        List<TeacherAttendanceSummaryProjection> result =
+                attendanceRepository.getTeacherAttendanceSummary(
+                        userId,
+                        date
+                );
+
+        return result.stream()
+                .map(p -> new TeacherAttendanceSummaryResponse(
+                        p.getClassName(),
+                        p.getTotalAttendance(),
+                        p.getPresent(),
+                        p.getAbsent()
+                ))
+                .toList();
+    }
+
+    @Override
+    public List<ClassAttendanceResponse> getClassAttendance(LocalDate date) {
+
+        Long userId = SecurityUtils.getCurrentUserId();
+
+        Long classId = classRepository.findByTeacher_Id(userId)
+                .orElseThrow(() ->
+                        new ClassRoomNotFoundException("Teacher dont have classroom"))
+                .getId();
 
         if (date.isAfter(LocalDate.now())) {
             throw new IllegalArgumentException(
@@ -311,8 +398,9 @@ public class AttendanceServiceImpl implements AttendanceService {
     }
 
     @Override
-    public List<StudentAttendanceHistoryResponse> getStudentHistory(
-            Long studentId
+    public Page<StudentAttendanceHistoryResponse> getStudentHistory(
+            Long studentId,
+            Pageable pageable
     ) {
 
         if (!studentRepository.existsById(studentId)) {
@@ -321,16 +409,13 @@ public class AttendanceServiceImpl implements AttendanceService {
             );
         }
 
-        List<StudentAttendanceHistoryProjection> result =
-                attendanceRepository.getStudentHistory(studentId);
-
-        return result.stream()
+        return attendanceRepository
+                .getStudentHistory(studentId, pageable)
                 .map(p -> new StudentAttendanceHistoryResponse(
                         p.getAttendanceDate(),
                         p.getStatus(),
                         p.getNote()
-                ))
-                .toList();
+                ));
     }
 
     @Override
@@ -449,6 +534,22 @@ public class AttendanceServiceImpl implements AttendanceService {
 
     @Override
     public StudentAttendanceStatisticResponse getStudentStatistic(Long studentId) {
-        return null;
+
+        StudentAttendanceStatisticProjection projection =
+                attendanceRepository.getStudentStatistic(studentId);
+
+        if (projection == null) {
+            return new StudentAttendanceStatisticResponse(
+                    studentId,
+                    0L,
+                    0L
+            );
+        }
+
+        return new StudentAttendanceStatisticResponse(
+                projection.getStudentId(),
+                projection.getPresentDays() == null ? 0L : projection.getPresentDays(),
+                projection.getAbsentDays() == null ? 0L : projection.getAbsentDays()
+        );
     }
 }

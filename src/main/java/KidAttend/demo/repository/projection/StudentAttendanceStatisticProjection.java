@@ -8,6 +8,4 @@ public interface StudentAttendanceStatisticProjection {
 
     Long getAbsentDays();
 
-    Long getLateDays();
-
 }

@@ -87,18 +87,6 @@ public class UserController {
         );
     }
 
-    // ================= GET BY JWTTOKEN =================
-    @GetMapping("/me")
-    public ResponseEntity<?> getUserByMe() {
-
-        UserResponse response = userService.findByMe();
-
-        return ResponseData.success(
-                response,
-                "Get user successfully",
-                HttpStatus.OK
-        );
-    }
 
     // ================= GET BY EMAIL =================
     @GetMapping("/by-email")
@@ -125,6 +113,20 @@ public class UserController {
         return ResponseData.success(
                 response,
                 "Update user info successfully",
+                HttpStatus.OK
+        );
+    }
+
+
+    // ================= GET BY JWTTOKEN =================
+    @GetMapping("/me")
+    public ResponseEntity<?> getUserByMe() {
+
+        UserResponse response = userService.findByMe();
+
+        return ResponseData.success(
+                response,
+                "Get user successfully",
                 HttpStatus.OK
         );
     }

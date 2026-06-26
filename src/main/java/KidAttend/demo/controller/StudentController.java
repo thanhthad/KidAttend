@@ -27,24 +27,6 @@ public class StudentController {
 
     private final StudentService studentService;
 
-    // ================= GET ALL / SEARCH =================
-    @GetMapping
-    public ResponseEntity<?> search(
-            @RequestParam(required = false) Long classId,
-            @RequestParam(required = false) String name,
-            @RequestParam(required = false) String address,
-            Pageable pageable
-    ) {
-
-        Page<StudentResponse> response =
-                studentService.search(classId, name, address, pageable);
-
-        return ResponseData.success(
-                response,
-                "Get students successfully",
-                HttpStatus.OK
-        );
-    }
 
     // ================= GET BY ID =================
     @GetMapping("/{id}")
@@ -59,18 +41,6 @@ public class StudentController {
         );
     }
 
-    @GetMapping("/class/{classId}")
-    public ResponseEntity<?> getAllByClass(@PathVariable Long classId) {
-
-        List<StudentResponse> response =
-                studentService.getAllByClassId(classId);
-
-        return ResponseData.success(
-                response,
-                "Get students successfully",
-                HttpStatus.OK
-        );
-    }
 
     @GetMapping("/class/me")
     public ResponseEntity<?> getAllByMe() {
@@ -129,6 +99,26 @@ public class StudentController {
         );
     }
 
+    // ================= GET ALL / SEARCH =================
+    @GetMapping
+    public ResponseEntity<?> search(
+            @RequestParam(required = false) Long classId,
+            @RequestParam(required = false) String name,
+            @RequestParam(required = false) String address,
+            Pageable pageable
+    ) {
+
+        Page<StudentResponse> response =
+                studentService.search(classId, name, address, pageable);
+
+        return ResponseData.success(
+                response,
+                "Get students successfully",
+                HttpStatus.OK
+        );
+    }
+
+
     // ================= BULK CREATE =================
     @PostMapping("/bulk")
     public ResponseEntity<?> bulkCreate(
@@ -142,6 +132,20 @@ public class StudentController {
                 response,
                 "Bulk create students successfully",
                 HttpStatus.CREATED
+        );
+    }
+
+
+    @GetMapping("/class/{classId}")
+    public ResponseEntity<?> getAllByClass(@PathVariable Long classId) {
+
+        List<StudentResponse> response =
+                studentService.getAllByClassId(classId);
+
+        return ResponseData.success(
+                response,
+                "Get students successfully",
+                HttpStatus.OK
         );
     }
 }

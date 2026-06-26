@@ -18,15 +18,17 @@ public interface AttendanceService {
             Long id,
             UpdateAttendanceRequest request);
 
+    List<AttendanceResponse> batchUpdate(List<UpdateAttendanceRequest> requests);
+
     void delete(Long id);
 
     List<AttendanceDateResponse> getAttendanceDates();
 
-    List<AttendanceDateResponse> getAttendanceDatesByClassId(Long classId);
+    Page<AttendanceDateResponse> getAttendanceDatesByClassId(Pageable pageable);
 
 
-    List<AttendanceDetailResponse> getAttendanceByDate(
-            LocalDate date);
+    Page<AttendanceDetailResponse> getAttendanceByDate(
+            LocalDate date ,Pageable pageable);
 
     List<AttendanceStatusSummaryResponse> getStatusSummaryByDate(
             LocalDate date);
@@ -38,12 +40,16 @@ public interface AttendanceService {
             Long teacherId,
             LocalDate date);
 
-    List<ClassAttendanceResponse> getClassAttendance(
-            Long classId,
+    List<TeacherAttendanceSummaryResponse> getTeacherAttendanceSummaryMe(
             LocalDate date);
 
-    List<StudentAttendanceHistoryResponse> getStudentHistory(
-            Long studentId);
+    List<ClassAttendanceResponse> getClassAttendance(
+            LocalDate date);
+
+    Page<StudentAttendanceHistoryResponse> getStudentHistory(
+            Long studentId,
+            Pageable pageable
+    );
 
     Page<StudentResponse> getStudentsNotYetAttendance(
             LocalDate date,

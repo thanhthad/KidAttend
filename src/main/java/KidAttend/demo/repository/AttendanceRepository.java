@@ -51,7 +51,7 @@ public interface AttendanceRepository extends JpaRepository<Attendance, Long> {
     WHERE s.classEntity.id = :classId
     ORDER BY a.attendanceDate DESC
 """)
-    List<AttendanceDateProjection> getAttendanceDatesByClassId(Long classId);
+    Page<AttendanceDateProjection> getAttendanceDatesByClassId(Long classId,Pageable pageable);
 
     boolean existsByStudent_IdAndAttendanceDate(Long studentId, LocalDate attendanceDate);
 
@@ -71,8 +71,9 @@ public interface AttendanceRepository extends JpaRepository<Attendance, Long> {
         WHERE a.student.id = :studentId
         ORDER BY a.attendanceDate DESC
     """)
-    List<StudentAttendanceHistoryProjection> getStudentHistory(
-            Long studentId
+    Page<StudentAttendanceHistoryProjection> getStudentHistory(
+            Long studentId,
+            Pageable pageable
     );
 
     @Query("""
@@ -103,8 +104,8 @@ public interface AttendanceRepository extends JpaRepository<Attendance, Long> {
     WHERE a.attendanceDate = :date
     ORDER BY c.name ASC, s.fullName ASC
 """)
-    List<AttendanceDetailProjection> getAttendanceByDate(
-            LocalDate date
+    Page<AttendanceDetailProjection> getAttendanceByDate(
+            LocalDate date,Pageable pageable
     );
 
     @Query("""
