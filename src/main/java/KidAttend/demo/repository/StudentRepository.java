@@ -21,4 +21,6 @@ public interface StudentRepository extends JpaRepository<Student, Long>,
 
     boolean existsByParentPhone(String parentPhone);
     boolean existsByParentEmail(String parentEmail);
+    boolean existsByClassEntity_Id(Long classId);
+
 }

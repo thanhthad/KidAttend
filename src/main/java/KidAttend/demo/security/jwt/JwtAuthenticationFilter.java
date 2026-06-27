@@ -27,8 +27,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             FilterChain filterChain
     ) throws ServletException, IOException {
 
+        // ✅ ALWAYS allow OPTIONS (preflight)
+        if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
         String authHeader = request.getHeader("Authorization");
 
+        // No token → continue normally (NOT block)
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             filterChain.doFilter(request, response);
             return;
@@ -53,36 +60,31 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             filterChain.doFilter(request, response);
 
         } catch (ExpiredJwtException ex) {
-            sendErrorResponse(response, "JWT token has expired");
-
+            sendError(response, "JWT expired");
         } catch (SignatureException ex) {
-            sendErrorResponse(response, "Invalid JWT signature");
-
+            sendError(response, "Invalid signature");
         } catch (MalformedJwtException ex) {
-            sendErrorResponse(response, "Malformed JWT token");
-
+            sendError(response, "Malformed token");
         } catch (UnsupportedJwtException ex) {
-            sendErrorResponse(response, "Unsupported JWT token");
-
+            sendError(response, "Unsupported token");
         } catch (IllegalArgumentException ex) {
-            sendErrorResponse(response, "JWT token is empty");
-
+            sendError(response, "Token empty");
         } catch (Exception ex) {
-            sendErrorResponse(response, "Authentication failed");
+            sendError(response, "Authentication failed");
         }
     }
 
-    private void sendErrorResponse(HttpServletResponse response, String message)
+    private void sendError(HttpServletResponse response, String message)
             throws IOException {
 
         response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-        response.setContentType("application/json");
+        response.setContentType("application/json;charset=UTF-8");
 
         response.getWriter().write("""
-                {
-                    "success": false,
-                    "message": "%s"
-                }
-                """.formatted(message));
+            {
+                "success": false,
+                "message": "%s"
+            }
+        """.formatted(message));
     }
 }

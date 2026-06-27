@@ -57,7 +57,7 @@ public class AttendanceController {
     // ================= CLASS ATTENDANCE =================
     @GetMapping("/class/{date}")
     public ResponseEntity<?> getClassAttendance(
-            @RequestParam LocalDate date
+            @PathVariable LocalDate date
     ) {
 
         List<ClassAttendanceResponse> response =
@@ -72,11 +72,10 @@ public class AttendanceController {
 
     @GetMapping("/student/{studentId}/history")
     public ResponseEntity<?> studentHistory(
-            @PathVariable Long studentId,
-            Pageable pageable
+            @PathVariable Long studentId
     ) {
-        Page<StudentAttendanceHistoryResponse> response =
-                attendanceService.getStudentHistory(studentId,pageable);
+        List<StudentAttendanceHistoryResponse> response =
+                attendanceService.getStudentHistory(studentId);
 
         return ResponseData.success(response, "OK", HttpStatus.OK);
     }
@@ -94,10 +93,10 @@ public class AttendanceController {
 
     // ================= GET DATES BY CLASS =================
     @GetMapping("/dates/class/me")
-    public ResponseEntity<?> getDatesByClass(Pageable pageable) {
+    public ResponseEntity<?> getDatesByClass() {
 
-        Page<AttendanceDateResponse> response =
-                attendanceService.getAttendanceDatesByClassId(pageable);
+        List<AttendanceDateResponse> response =
+                attendanceService.getAttendanceDatesByClassId();
 
         return ResponseData.success(
                 response,

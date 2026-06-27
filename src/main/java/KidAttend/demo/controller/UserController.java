@@ -4,6 +4,7 @@ import KidAttend.demo.common.response.ResponseData;
 import KidAttend.demo.dto.request.user.BulkCreateUserRequest;
 import KidAttend.demo.dto.request.user.UpdateUserInfo;
 import KidAttend.demo.dto.request.user.UpdateUserPassword;
+import KidAttend.demo.dto.request.user.UserCreateRequest;
 import KidAttend.demo.dto.response.user.UserResponse;
 import KidAttend.demo.service.UserService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -26,6 +27,53 @@ import java.util.List;
 public class UserController {
 
     private final UserService userService;
+
+
+    // ================= UPDATE USER INFO =================
+    @PutMapping
+    public ResponseEntity<?> updateUserInfo(
+            @Valid @RequestBody UpdateUserInfo request
+    ) {
+
+        UserResponse response =
+                userService.updateUserInfo(request);
+
+        return ResponseData.success(
+                response,
+                "Update user info successfully",
+                HttpStatus.OK
+        );
+    }
+
+
+    // ================= GET BY JWTTOKEN =================
+    @GetMapping("/me")
+    public ResponseEntity<?> getUserByMe() {
+
+        UserResponse response = userService.findByMe();
+
+        return ResponseData.success(
+                response,
+                "Get user successfully",
+                HttpStatus.OK
+        );
+    }
+
+    // ================= CHANGE PASSWORD =================
+    @PatchMapping("/password")
+    public ResponseEntity<?> changePassword(
+            @Valid @RequestBody UpdateUserPassword request
+    ) {
+
+        UserResponse response =
+                userService.changePassword( request);
+
+        return ResponseData.success(
+                response,
+                "Change password successfully",
+                HttpStatus.OK
+        );
+    }
 
     // ================= GET ALL USERS =================
     @GetMapping
@@ -101,51 +149,6 @@ public class UserController {
         );
     }
 
-    // ================= UPDATE USER INFO =================
-    @PutMapping
-    public ResponseEntity<?> updateUserInfo(
-            @Valid @RequestBody UpdateUserInfo request
-    ) {
-
-        UserResponse response =
-                userService.updateUserInfo(request);
-
-        return ResponseData.success(
-                response,
-                "Update user info successfully",
-                HttpStatus.OK
-        );
-    }
-
-
-    // ================= GET BY JWTTOKEN =================
-    @GetMapping("/me")
-    public ResponseEntity<?> getUserByMe() {
-
-        UserResponse response = userService.findByMe();
-
-        return ResponseData.success(
-                response,
-                "Get user successfully",
-                HttpStatus.OK
-        );
-    }
-
-    // ================= CHANGE PASSWORD =================
-    @PatchMapping("/password")
-    public ResponseEntity<?> changePassword(
-            @Valid @RequestBody UpdateUserPassword request
-    ) {
-
-        UserResponse response =
-                userService.changePassword( request);
-
-        return ResponseData.success(
-                response,
-                "Change password successfully",
-                HttpStatus.OK
-        );
-    }
 
     // ================= DELETE USER =================
     @DeleteMapping("/{id}")
@@ -157,6 +160,20 @@ public class UserController {
                 null,
                 "Delete user successfully",
                 HttpStatus.OK
+        );
+    }
+
+    @PostMapping
+    public ResponseEntity<?> createUsers(
+            @Valid @RequestBody UserCreateRequest request
+    ) {
+
+        userService.create(request);
+
+        return ResponseData.success(
+                null,
+                "Create user successfully",
+                HttpStatus.CREATED
         );
     }
 

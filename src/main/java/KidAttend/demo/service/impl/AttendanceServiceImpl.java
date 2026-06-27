@@ -128,13 +128,13 @@ public class AttendanceServiceImpl implements AttendanceService {
 
         LocalDate today = LocalDate.now();
 
-        AttendanceSetting setting = attendanceSettingRepository.findById(1L)
-                .orElseThrow(() ->
-                        new AttendanceSettingNotFoundException("Attendance setting not configured"));
-
-        if (LocalTime.now().isAfter(setting.getEndTime())) {
-            throw new IllegalArgumentException("Attendance time is over");
-        }
+//        AttendanceSetting setting = attendanceSettingRepository.findById(1L)
+//                .orElseThrow(() ->
+//                        new AttendanceSettingNotFoundException("Attendance setting not configured"));
+//
+//        if (LocalTime.now().isAfter(setting.getEndTime())) {
+//            throw new IllegalArgumentException("Attendance time is over");
+//        }
 
         List<Long> attendanceIds = requests.stream()
                 .map(UpdateAttendanceRequest::getAttendanceId)
@@ -150,6 +150,7 @@ public class AttendanceServiceImpl implements AttendanceService {
 
         List<AttendanceResponse> responses = new ArrayList<>();
 
+
         for (UpdateAttendanceRequest request : requests) {
 
             Attendance attendance = attendanceMap.get(request.getAttendanceId());
@@ -159,6 +160,9 @@ public class AttendanceServiceImpl implements AttendanceService {
                         "Attendance not found with id: "
                                 + request.getAttendanceId());
             }
+
+            System.out.println("TODAY = " + LocalDate.now());
+            System.out.println("ATT DATE = " + attendance.getAttendanceDate());
 
             if (!attendance.getAttendanceDate().isEqual(today)) {
                 throw new IllegalArgumentException(
@@ -254,7 +258,7 @@ public class AttendanceServiceImpl implements AttendanceService {
     }
 
     @Override
-    public Page<AttendanceDateResponse> getAttendanceDatesByClassId(Pageable pageable) {
+    public List<AttendanceDateResponse> getAttendanceDatesByClassId() {
 
         Long userId = SecurityUtils.getCurrentUserId();
 
@@ -264,8 +268,10 @@ public class AttendanceServiceImpl implements AttendanceService {
                 .getId();
 
         return attendanceRepository
-                .getAttendanceDatesByClassId(classId, pageable)
-                .map(p -> new AttendanceDateResponse(p.getAttendanceDate()));
+                .getAttendanceDatesByClassId(classId)
+                .stream()
+                .map(p -> new AttendanceDateResponse(p.getAttendanceDate()))
+                .toList();
     }
 
     @Override
@@ -398,10 +404,7 @@ public class AttendanceServiceImpl implements AttendanceService {
     }
 
     @Override
-    public Page<StudentAttendanceHistoryResponse> getStudentHistory(
-            Long studentId,
-            Pageable pageable
-    ) {
+    public List<StudentAttendanceHistoryResponse> getStudentHistory(Long studentId) {
 
         if (!studentRepository.existsById(studentId)) {
             throw new StudentNotFoundException(
@@ -410,12 +413,14 @@ public class AttendanceServiceImpl implements AttendanceService {
         }
 
         return attendanceRepository
-                .getStudentHistory(studentId, pageable)
+                .getStudentHistory(studentId)
+                .stream()
                 .map(p -> new StudentAttendanceHistoryResponse(
                         p.getAttendanceDate(),
                         p.getStatus(),
                         p.getNote()
-                ));
+                ))
+                .toList();
     }
 
     @Override

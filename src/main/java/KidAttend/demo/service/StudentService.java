@@ -19,6 +19,8 @@ public interface StudentService {
 
     StudentResponse getById(Long id);
 
+    Page<StudentResponse> getAll(Pageable pageable);
+
     List<StudentResponse> getAllByClassId(Long classId);
 
     List<StudentResponse> getAllByMe();

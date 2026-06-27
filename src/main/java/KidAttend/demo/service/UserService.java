@@ -3,6 +3,7 @@ package KidAttend.demo.service;
 import KidAttend.demo.dto.request.user.BulkCreateUserRequest;
 import KidAttend.demo.dto.request.user.UpdateUserInfo;
 import KidAttend.demo.dto.request.user.UpdateUserPassword;
+import KidAttend.demo.dto.request.user.UserCreateRequest;
 import KidAttend.demo.dto.response.user.UserResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -30,4 +31,7 @@ public interface UserService {
     void deleteUser(Long id);
 
     List<UserResponse> createUsers(BulkCreateUserRequest request);
+
+    void create(UserCreateRequest request);
+
 }

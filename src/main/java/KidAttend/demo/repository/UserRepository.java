@@ -10,6 +10,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -20,6 +21,15 @@ public interface UserRepository extends JpaRepository<User, Long> {
     boolean existsByEmail(String email);
 
     boolean existsByPhone(String phone);
+
+    @Query("""
+    SELECT u
+    FROM User u
+    LEFT JOIN ClassEntity c ON c.teacher.id = u.id
+    WHERE c.id IS NULL
+    AND u.role = 'TEACHER'
+""")
+    List<User> findUnassignedTeachers();
 
     @Query("""
     SELECT new KidAttend.demo.dto.response.user.UserResponse(

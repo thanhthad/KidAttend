@@ -165,6 +165,38 @@ public class StudentServiceImpl implements StudentService {
     }
 
     @Override
+    public Page<StudentResponse> getAll(Pageable pageable) {
+        return studentRepository.findAll(pageable)
+                .map(this::convertToResponse);
+    }
+
+    private StudentResponse convertToResponse(Student student) {
+        return StudentResponse.builder()
+                .id(student.getId())
+
+                .classId(student.getClassEntity() != null
+                        ? student.getClassEntity().getId()
+                        : null)
+
+                .className(student.getClassEntity() != null
+                        ? student.getClassEntity().getName()
+                        : null)
+
+                .fullName(student.getFullName())
+                .gender(student.getGender())
+                .dateOfBirth(student.getDateOfBirth())
+
+                .parentName(student.getParentName())
+                .parentPhone(student.getParentPhone())
+                .parentEmail(student.getParentEmail())
+
+                .address(student.getAddress())
+                .status(student.getStatus())
+
+                .build();
+    }
+
+    @Override
     public List<StudentResponse> getAllByClassId(Long classId) {
 
         ClassEntity classEntity = getClassById(classId);

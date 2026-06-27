@@ -3,12 +3,15 @@ package KidAttend.demo.service.impl;
 import KidAttend.demo.dto.request.user.BulkCreateUserRequest;
 import KidAttend.demo.dto.request.user.UpdateUserInfo;
 import KidAttend.demo.dto.request.user.UpdateUserPassword;
+import KidAttend.demo.dto.request.user.UserCreateRequest;
 import KidAttend.demo.dto.response.user.UserResponse;
 import KidAttend.demo.entity.User;
 import KidAttend.demo.exception.user.EmailAlreadyExistsException;
 import KidAttend.demo.exception.user.PhoneAlreadyExistsException;
 import KidAttend.demo.exception.user.UserAlreadyExistsException;
 import KidAttend.demo.exception.user.UserNotFoundException;
+import KidAttend.demo.repository.AttendanceRepository;
+import KidAttend.demo.repository.ClassRepository;
 import KidAttend.demo.repository.UserRepository;
 import KidAttend.demo.security.userdetails.SecurityUtils;
 import KidAttend.demo.service.UserService;
@@ -31,6 +34,8 @@ public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final AttendanceRepository attendanceRepository;
+    private final ClassRepository classRepository;
 
     @Override
     public Page<UserResponse> findAll(Pageable pageable) {
@@ -64,14 +69,6 @@ public class UserServiceImpl implements UserService {
         return mapToResponse(user);
     }
 
-    // =========================
-    @Override
-    public UserResponse findByEmail(String email) {
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new UserNotFoundException("User not found"));
-
-        return mapToResponse(user);
-    }
 
     @Override
     public UserResponse changePassword(UpdateUserPassword req) {
@@ -111,14 +108,37 @@ public class UserServiceImpl implements UserService {
         return mapToResponse(user);
     }
 
+
     // =========================
     @Override
+    public UserResponse findByEmail(String email) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new UserNotFoundException("User not found"));
+
+        return mapToResponse(user);
+    }
+
+    @Override
     public void deleteUser(Long id) {
-        if (!userRepository.existsById(id)) {
-            throw new UserNotFoundException("User not found");
+
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new UserNotFoundException("User not found"));
+
+        boolean hasAttendance = attendanceRepository.existsByCreatedById(id);
+        if (hasAttendance) {
+            throw new UserAlreadyExistsException(
+                    "User đã tạo dữ liệu điểm danh, không thể xóa"
+            );
         }
 
-        userRepository.deleteById(id);
+        boolean isTeacher = classRepository.existsByTeacherId(id);
+        if (isTeacher) {
+            throw new UserAlreadyExistsException(
+                    "User đang là giáo viên của lớp, không thể xóa"
+            );
+        }
+
+        userRepository.delete(user);
     }
 
     private UserResponse mapToResponse(User user) {
@@ -171,5 +191,26 @@ public class UserServiceImpl implements UserService {
                 .stream()
                 .map(this::mapToResponse)
                 .toList();
+    }
+
+    @Override
+    @Transactional
+    public void create(UserCreateRequest dto) {
+
+        if (userRepository.existsByEmail(dto.getEmail())) {
+            throw new EmailAlreadyExistsException("Email already exists: " + dto.getEmail());
+        }
+
+        if (dto.getPhone() != null && userRepository.existsByPhone(dto.getPhone())) {
+            throw new PhoneAlreadyExistsException("Phone already exists: " + dto.getPhone());
+        }
+        User user = User.builder()
+                .fullName(dto.getFullName())
+                .email(dto.getEmail())
+                .phone(dto.getPhone())
+                .passwordHash(passwordEncoder.encode(dto.getPassword()))
+                .role("USER")
+                .status("ACTIVE")
+                .build();
     }
 }

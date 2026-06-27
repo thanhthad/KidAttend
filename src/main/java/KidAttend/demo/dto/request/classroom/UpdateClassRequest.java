@@ -9,6 +9,7 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 public class UpdateClassRequest {
+
     private String name;
 
     private Integer age;
@@ -16,6 +17,9 @@ public class UpdateClassRequest {
     private Integer capacity;
 
     private Long teacherId;
+
+    // thêm field này
+    private Boolean removeTeacher;
 
     private String description;
 

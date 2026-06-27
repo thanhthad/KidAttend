@@ -5,6 +5,7 @@ import KidAttend.demo.dto.request.classroom.ClassSearchRequest;
 import KidAttend.demo.dto.request.classroom.CreateClassRequest;
 import KidAttend.demo.dto.request.classroom.UpdateClassRequest;
 import KidAttend.demo.dto.response.classroom.ClassResponse;
+import KidAttend.demo.dto.response.user.UserResponse;
 import KidAttend.demo.service.ClassService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -16,6 +17,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/classes")
 @RequiredArgsConstructor
@@ -24,6 +27,20 @@ import org.springframework.web.bind.annotation.*;
 public class ClassController {
 
     private final ClassService classService;
+
+    // ================= GET CLASS BY TEACHERID =================
+    @GetMapping("/teacher/me")
+    public ResponseEntity<?> getClassByMe() {
+
+        ClassResponse response =
+                classService.getByClassByMe();
+
+        return ResponseData.success(
+                response,
+                "Get class successfully",
+                HttpStatus.OK
+        );
+    }
 
     // ================= GET ALL CLASSES =================
     @GetMapping
@@ -86,19 +103,6 @@ public class ClassController {
         );
     }
 
-    // ================= GET CLASS BY TEACHERID =================
-    @GetMapping("/teacher/me")
-    public ResponseEntity<?> getClassByMe() {
-
-        ClassResponse response =
-                classService.getByClassByMe();
-
-        return ResponseData.success(
-                response,
-                "Get class successfully",
-                HttpStatus.OK
-        );
-    }
 
     // ================= CREATE CLASS =================
     @PostMapping
@@ -113,6 +117,18 @@ public class ClassController {
                 response,
                 "Create class successfully",
                 HttpStatus.CREATED
+        );
+    }
+
+    @GetMapping("/teachers/unassigned")
+    public ResponseEntity<?> getUnassignedTeachers() {
+
+        List<UserResponse> response = classService.getUnassignedTeachers();
+
+        return ResponseData.success(
+                response,
+                "Get unassigned teachers successfully",
+                HttpStatus.OK
         );
     }
 

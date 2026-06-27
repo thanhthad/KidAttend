@@ -3,11 +3,14 @@ package KidAttend.demo.service.impl;
 import KidAttend.demo.dto.request.classroom.*;
 import KidAttend.demo.dto.response.classroom.ClassResponse;
 import KidAttend.demo.dto.response.user.TeacherResponse;
+import KidAttend.demo.dto.response.user.UserResponse;
 import KidAttend.demo.entity.*;
 import KidAttend.demo.exception.classroom.ClassRoomAlreadyExistsException;
 import KidAttend.demo.exception.classroom.ClassRoomNotFoundException;
 import KidAttend.demo.exception.student.InvalidAgeException;
+import KidAttend.demo.exception.student.StudentAlreadyExistsException;
 import KidAttend.demo.exception.user.UserNotFoundException;
+import KidAttend.demo.repository.UserRepository;
 import KidAttend.demo.repository.projection.ClassProjection;
 import KidAttend.demo.repository.ClassRepository;
 import KidAttend.demo.repository.StudentRepository;
@@ -20,6 +23,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -28,6 +32,7 @@ public class ClassServiceImpl implements ClassService {
     private final ClassRepository classRepository;
     private final UserServiceDomain userServiceDomain;
     private final StudentRepository studentRepository;
+    private final UserRepository userRepository;
 
     // ================= CREATE =================
 
@@ -123,16 +128,20 @@ public class ClassServiceImpl implements ClassService {
             entity.setStatus(request.getStatus());
         }
 
-        // ================= TEACHER =================
-        if (request.getTeacherId() != null) {
+        // ================= REMOVE TEACHER =================
+        if (Boolean.TRUE.equals(request.getRemoveTeacher())) {
+            entity.setTeacher(null);
+        }
+
+        // ================= UPDATE TEACHER =================
+        else if (request.getTeacherId() != null) {
 
             User teacher = userServiceDomain.getByUserId(request.getTeacherId());
 
-            boolean existing = classRepository
-                    .existsByTeacherId(request.getTeacherId());
+            boolean existing = classRepository.existsByTeacherId(request.getTeacherId());
 
-            if(existing){
-                throw new IllegalArgumentException("Teacher already sign with another class");
+            if (existing) {
+                throw new IllegalArgumentException("Teacher already assigned to another class");
             }
 
             entity.setTeacher(teacher);
@@ -149,6 +158,9 @@ public class ClassServiceImpl implements ClassService {
         ClassEntity entity = classRepository.findById(id)
                 .orElseThrow(() -> new ClassRoomNotFoundException("Class not found: " + id));
 
+        if(studentRepository.existsByClassEntity_Id(id)){
+            throw new StudentAlreadyExistsException("Student already have class records");
+        }
         classRepository.delete(entity);
     }
 
@@ -202,6 +214,25 @@ public class ClassServiceImpl implements ClassService {
                 request.getTeacherId(),
                 pageable
         ).map(this::mapProjectionToResponse);
+    }
+
+    private UserResponse map(User u) {
+        return UserResponse.builder()
+                .id(u.getId())
+                .fullName(u.getFullName())
+                .email(u.getEmail())
+                .phone(u.getPhone())
+                .build();
+    }
+
+    @Override
+    public List<UserResponse> getUnassignedTeachers() {
+
+        List<User> users = userRepository.findUnassignedTeachers();
+
+        return users.stream()
+                .map(this::map)
+                .toList();
     }
 
     // ================= ENTITY MAPPER =================

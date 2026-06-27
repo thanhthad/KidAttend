@@ -136,6 +136,19 @@ public class StudentController {
     }
 
 
+    @GetMapping("/getAll")
+    public ResponseEntity<?> getAll(Pageable pageable) {
+
+        Page<StudentResponse> response =
+                studentService.getAll(pageable);
+
+        return ResponseData.success(
+                response,
+                "Get students successfully",
+                HttpStatus.OK
+        );
+    }
+
     @GetMapping("/class/{classId}")
     public ResponseEntity<?> getAllByClass(@PathVariable Long classId) {
 

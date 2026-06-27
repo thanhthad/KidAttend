@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Optional;
 
 public interface AttendanceRepository extends JpaRepository<Attendance, Long> {
+    boolean existsByCreatedById(Long userId);
 
     @Query("""
     SELECT COUNT(a)
@@ -51,7 +52,7 @@ public interface AttendanceRepository extends JpaRepository<Attendance, Long> {
     WHERE s.classEntity.id = :classId
     ORDER BY a.attendanceDate DESC
 """)
-    Page<AttendanceDateProjection> getAttendanceDatesByClassId(Long classId,Pageable pageable);
+    List<AttendanceDateProjection> getAttendanceDatesByClassId(Long classId);
 
     boolean existsByStudent_IdAndAttendanceDate(Long studentId, LocalDate attendanceDate);
 
@@ -63,18 +64,15 @@ public interface AttendanceRepository extends JpaRepository<Attendance, Long> {
     List<AttendanceDateProjection> getAttendanceDates();
 
     @Query("""
-        SELECT
-            a.attendanceDate as attendanceDate,
-            a.status as status,
-            a.note as note
-        FROM Attendance a
-        WHERE a.student.id = :studentId
-        ORDER BY a.attendanceDate DESC
-    """)
-    Page<StudentAttendanceHistoryProjection> getStudentHistory(
-            Long studentId,
-            Pageable pageable
-    );
+    SELECT
+        a.attendanceDate as attendanceDate,
+        a.status as status,
+        a.note as note
+    FROM Attendance a
+    WHERE a.student.id = :studentId
+    ORDER BY a.attendanceDate DESC
+""")
+    List<StudentAttendanceHistoryProjection> getStudentHistory(Long studentId);
 
     @Query("""
         SELECT
