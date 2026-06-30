@@ -17,6 +17,17 @@ public interface AttendanceRepository extends JpaRepository<Attendance, Long> {
     boolean existsByCreatedById(Long userId);
 
     @Query("""
+    SELECT a
+    FROM Attendance a
+    WHERE a.attendanceDate = :date
+    AND a.student.classEntity.id = :classId
+    """)
+    List<Attendance> findByClassAndDate(
+            @Param("classId") Long classId,
+            @Param("date") LocalDate date
+    );
+
+    @Query("""
     SELECT COUNT(a)
     FROM Attendance a
     WHERE a.attendanceDate = :date

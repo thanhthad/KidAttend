@@ -27,7 +27,6 @@ public class StudentController {
 
     private final StudentService studentService;
 
-
     // ================= GET BY ID =================
     @GetMapping("/{id}")
     public ResponseEntity<?> getById(@PathVariable Long id) {
@@ -36,12 +35,12 @@ public class StudentController {
 
         return ResponseData.success(
                 response,
-                "Get student successfully",
+                "Lấy thông tin học sinh thành công",
                 HttpStatus.OK
         );
     }
 
-
+    // ================= GET BY CLASS (ME) =================
     @GetMapping("/class/me")
     public ResponseEntity<?> getAllByMe() {
 
@@ -50,7 +49,7 @@ public class StudentController {
 
         return ResponseData.success(
                 response,
-                "Get students successfully",
+                "Lấy danh sách học sinh thành công",
                 HttpStatus.OK
         );
     }
@@ -65,7 +64,7 @@ public class StudentController {
 
         return ResponseData.success(
                 response,
-                "Create student successfully",
+                "Tạo học sinh thành công",
                 HttpStatus.CREATED
         );
     }
@@ -81,7 +80,7 @@ public class StudentController {
 
         return ResponseData.success(
                 response,
-                "Update student successfully",
+                "Cập nhật học sinh thành công",
                 HttpStatus.OK
         );
     }
@@ -94,12 +93,12 @@ public class StudentController {
 
         return ResponseData.success(
                 null,
-                "Delete student successfully",
+                "Xóa học sinh thành công",
                 HttpStatus.OK
         );
     }
 
-    // ================= GET ALL / SEARCH =================
+    // ================= SEARCH =================
     @GetMapping
     public ResponseEntity<?> search(
             @RequestParam(required = false) Long classId,
@@ -113,11 +112,10 @@ public class StudentController {
 
         return ResponseData.success(
                 response,
-                "Get students successfully",
+                "Tìm kiếm học sinh thành công",
                 HttpStatus.OK
         );
     }
-
 
     // ================= BULK CREATE =================
     @PostMapping("/bulk")
@@ -130,12 +128,12 @@ public class StudentController {
 
         return ResponseData.success(
                 response,
-                "Bulk create students successfully",
+                "Tạo hàng loạt học sinh thành công",
                 HttpStatus.CREATED
         );
     }
 
-
+    // ================= GET ALL (PAGING) =================
     @GetMapping("/getAll")
     public ResponseEntity<?> getAll(Pageable pageable) {
 
@@ -144,11 +142,12 @@ public class StudentController {
 
         return ResponseData.success(
                 response,
-                "Get students successfully",
+                "Lấy danh sách học sinh thành công",
                 HttpStatus.OK
         );
     }
 
+    // ================= GET BY CLASS ID =================
     @GetMapping("/class/{classId}")
     public ResponseEntity<?> getAllByClass(@PathVariable Long classId) {
 
@@ -157,7 +156,7 @@ public class StudentController {
 
         return ResponseData.success(
                 response,
-                "Get students successfully",
+                "Lấy danh sách học sinh theo lớp thành công",
                 HttpStatus.OK
         );
     }

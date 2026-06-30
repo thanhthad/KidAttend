@@ -32,7 +32,7 @@ public class AuthServiceImpl implements AuthService {
 
         if (userRepository.existsByEmail(request.getEmail())) {
             throw new UserAlreadyExistsException(
-                    "User already exists with email: " + request.getEmail()
+                    "Người dùng đã tồn tại với email: " + request.getEmail()
             );
         }
 
@@ -69,16 +69,12 @@ public class AuthServiceImpl implements AuthService {
         User user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() ->
                         new UserNotFoundException(
-                                "User not found with email: " + request.getEmail()
+                                "Không tìm thấy người dùng với email: " + request.getEmail()
                         )
                 );
 
-//        if (!passwordEncoder.matches(request.getPassword(), user.getPasswordHash())) {
-//            throw new BadCredentialsException("Invalid password");
-//        }
-
-        if (!request.getPassword().equals(user.getPasswordHash())) {
-            throw new BadCredentialsException("Invalid password");
+        if (!passwordEncoder.matches(request.getPassword(), user.getPasswordHash())) {
+            throw new BadCredentialsException("Mật khẩu không đúng");
         }
 
         RefreshToken refreshTokenEntity =
@@ -94,6 +90,7 @@ public class AuthServiceImpl implements AuthService {
                 .userId(user.getId())
                 .accessToken(accessToken)
                 .refreshToken(refreshTokenEntity.getToken())
+                .role(user.getRole())
                 .build();
     }
 

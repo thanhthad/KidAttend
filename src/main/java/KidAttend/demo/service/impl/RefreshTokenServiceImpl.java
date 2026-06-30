@@ -9,7 +9,6 @@ import KidAttend.demo.service.RefreshTokenService;
 import KidAttend.demo.service.UserServiceDomain;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -23,6 +22,7 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
     private final JwtUtil jwtUtil;
     private final RefreshTokenRepository refreshTokenRepository;
     private final UserServiceDomain userServiceDomain;
+
     @Value("${jwt.refresh-expiration-ms}")
     private long refreshExpirationMs;
 
@@ -39,9 +39,7 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
                 .revoked(false)
                 .build();
 
-        RefreshToken saved = refreshTokenRepository.save(refreshToken);
-
-        return saved;
+        return refreshTokenRepository.save(refreshToken);
     }
 
     // ================= VERIFY =================
@@ -49,21 +47,21 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
     public RefreshToken verify(String token) {
 
         if (token == null || token.isBlank()) {
-            throw new InvalidRefreshTokenException("Refresh token is missing");
+            throw new InvalidRefreshTokenException("Refresh token không được để trống");
         }
 
         RefreshToken refreshToken =
                 refreshTokenRepository.findByToken(token)
                         .orElseThrow(() ->
-                                new InvalidRefreshTokenException("Refresh token not found")
+                                new InvalidRefreshTokenException("Không tìm thấy refresh token")
                         );
 
         if (refreshToken.isRevoked()) {
-            throw new RefreshTokenRevokedException("Refresh token has been revoked");
+            throw new RefreshTokenRevokedException("Refresh token đã bị thu hồi");
         }
 
         if (refreshToken.getExpiredAt().isBefore(LocalDateTime.now())) {
-            throw new RefreshTokenExpiredException("Refresh token has expired");
+            throw new RefreshTokenExpiredException("Refresh token đã hết hạn");
         }
 
         return refreshToken;
@@ -79,9 +77,7 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
                         userId,
                         LocalDateTime.now()
                 )
-                .map(token -> {
-                    return token;
-                })
+                .map(token -> token)
                 .orElseGet(() -> create(userId));
     }
 
@@ -93,13 +89,11 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
 
         User user = token.getUser();
 
-        String accessToken = jwtUtil.generateAccessToken(
+        return jwtUtil.generateAccessToken(
                 user.getId(),
                 user.getFullName(),
                 user.getRole()
         );
-
-        return accessToken;
     }
 
     // ================= REVOKE =================
@@ -112,6 +106,5 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
         token.setRevoked(true);
 
         refreshTokenRepository.save(token);
-
     }
 }

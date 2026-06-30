@@ -5,8 +5,6 @@ import KidAttend.demo.dto.request.attendance.CreateAttendanceRequest;
 import KidAttend.demo.dto.request.attendance.UpdateAttendanceRequest;
 import KidAttend.demo.dto.response.attendance.*;
 import KidAttend.demo.dto.response.student.StudentResponse;
-import KidAttend.demo.exception.classroom.ClassRoomNotFoundException;
-import KidAttend.demo.security.userdetails.SecurityUtils;
 import KidAttend.demo.service.AttendanceService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -30,8 +28,7 @@ public class AttendanceController {
 
     private final AttendanceService attendanceService;
 
-
-    // ================= Init =================
+    // ================= INIT =================
     @PostMapping
     public ResponseEntity<?> init() {
 
@@ -39,7 +36,7 @@ public class AttendanceController {
 
         return ResponseData.success(
                 response,
-                "Create attendance successfully",
+                "Khởi tạo điểm danh thành công",
                 HttpStatus.CREATED
         );
     }
@@ -50,48 +47,42 @@ public class AttendanceController {
         StudentAttendanceStatisticResponse response =
                 attendanceService.getStudentStatistic(studentId);
 
-        return ResponseData.success(response, "OK", HttpStatus.OK);
+        return ResponseData.success(response, "Thành công", HttpStatus.OK);
     }
-
 
     // ================= CLASS ATTENDANCE =================
     @GetMapping("/class/{date}")
-    public ResponseEntity<?> getClassAttendance(
-            @PathVariable LocalDate date
-    ) {
+    public ResponseEntity<?> getClassAttendance(@PathVariable LocalDate date) {
 
         List<ClassAttendanceResponse> response =
-                attendanceService.getClassAttendance( date);
+                attendanceService.getClassAttendance(date);
 
         return ResponseData.success(
                 response,
-                "Get class attendance successfully",
+                "Lấy danh sách điểm danh theo lớp thành công",
                 HttpStatus.OK
         );
     }
 
     @GetMapping("/student/{studentId}/history")
-    public ResponseEntity<?> studentHistory(
-            @PathVariable Long studentId
-    ) {
+    public ResponseEntity<?> studentHistory(@PathVariable Long studentId) {
+
         List<StudentAttendanceHistoryResponse> response =
                 attendanceService.getStudentHistory(studentId);
 
-        return ResponseData.success(response, "OK", HttpStatus.OK);
+        return ResponseData.success(response, "Thành công", HttpStatus.OK);
     }
 
     @GetMapping("/teacher/summary/me")
-    public ResponseEntity<?> teacherSummaryByMe(
-            @RequestParam LocalDate date
-    ) {
-        List<TeacherAttendanceSummaryResponse> response =
-                attendanceService.getTeacherAttendanceSummaryMe( date);
+    public ResponseEntity<?> teacherSummaryByMe(@RequestParam LocalDate date) {
 
-        return ResponseData.success(response, "OK", HttpStatus.OK);
+        List<TeacherAttendanceSummaryResponse> response =
+                attendanceService.getTeacherAttendanceSummaryMe(date);
+
+        return ResponseData.success(response, "Thành công", HttpStatus.OK);
     }
 
-
-    // ================= GET DATES BY CLASS =================
+    // ================= DATES BY CLASS =================
     @GetMapping("/dates/class/me")
     public ResponseEntity<?> getDatesByClass() {
 
@@ -100,7 +91,7 @@ public class AttendanceController {
 
         return ResponseData.success(
                 response,
-                "Get attendance dates by class successfully",
+                "Lấy danh sách ngày điểm danh theo lớp thành công",
                 HttpStatus.OK
         );
     }
@@ -116,7 +107,7 @@ public class AttendanceController {
 
         return ResponseData.success(
                 response,
-                "Update attendance successfully",
+                "Cập nhật điểm danh thành công",
                 HttpStatus.OK
         );
     }
@@ -132,24 +123,12 @@ public class AttendanceController {
 
         return ResponseData.success(
                 attendanceResponses,
-                "Update attendance successfully",
+                "Cập nhật điểm danh hàng loạt thành công",
                 HttpStatus.OK
         );
     }
 
-    @GetMapping("/teacher/summary")
-    public ResponseEntity<?> teacherSummary(
-            @RequestParam Long teacherId,
-            @RequestParam LocalDate date
-    ) {
-        List<TeacherAttendanceSummaryResponse> response =
-                attendanceService.getTeacherAttendanceSummary(teacherId, date);
-
-        return ResponseData.success(response, "OK", HttpStatus.OK);
-    }
-
-
-    // ================= STATUS SUMMARY BY CLASS =================
+    // ================= SUMMARY BY CLASS =================
     @GetMapping("/summary/class/{classId}")
     public ResponseEntity<?> summaryByClass(
             @PathVariable Long classId,
@@ -161,21 +140,7 @@ public class AttendanceController {
 
         return ResponseData.success(
                 response,
-                "Get status summary by class successfully",
-                HttpStatus.OK
-        );
-    }
-
-
-    // ================= DELETE =================
-    @DeleteMapping("/{id}")
-    public ResponseEntity<?> delete(@PathVariable Long id) {
-
-        attendanceService.delete(id);
-
-        return ResponseData.success(
-                null,
-                "Delete attendance successfully",
+                "Lấy thống kê điểm danh theo lớp thành công",
                 HttpStatus.OK
         );
     }
@@ -189,30 +154,12 @@ public class AttendanceController {
 
         return ResponseData.success(
                 response,
-                "Get attendance dates successfully",
+                "Lấy danh sách ngày điểm danh thành công",
                 HttpStatus.OK
         );
     }
 
-
-    // ================= GET BY DATE (DETAIL + PAGING) =================
-    @GetMapping("/date")
-    public ResponseEntity<?> getByDate(
-            @RequestParam LocalDate date,
-            Pageable pageable
-    ) {
-
-        Page<AttendanceDetailResponse> response =
-                attendanceService.getAttendanceByDate(date,pageable);
-
-        return ResponseData.success(
-                response,
-                "Get attendance by date successfully",
-                HttpStatus.OK
-        );
-    }
-
-    // ================= STATUS SUMMARY ALL STUDENT BY DATE =================
+    // ================= SUMMARY BY DATE =================
     @GetMapping("/summary/date")
     public ResponseEntity<?> summaryByDate(@RequestParam LocalDate date) {
 
@@ -221,11 +168,10 @@ public class AttendanceController {
 
         return ResponseData.success(
                 response,
-                "Get status summary by date successfully",
+                "Lấy thống kê điểm danh theo ngày thành công",
                 HttpStatus.OK
         );
     }
-
 
     // ================= ATTENDANCE RATE =================
     @GetMapping("/rate")
@@ -236,32 +182,43 @@ public class AttendanceController {
 
         return ResponseData.success(
                 response,
-                "Get attendance rate successfully",
+                "Lấy tỷ lệ điểm danh thành công",
                 HttpStatus.OK
         );
     }
 
-    // TEST XEM CÓ HỌC SINH NÀO LỖI CHƯA CÓ DỮ LIỆU ĐIỂM DANH HAY CHƯA
+    // ================= NOT YET ATTENDANCE =================
     @GetMapping("/students/not-yet")
     public ResponseEntity<?> notYetAttendance(
             @RequestParam LocalDate date,
             Pageable pageable
     ) {
+
         Page<StudentResponse> response =
                 attendanceService.getStudentsNotYetAttendance(date, pageable);
 
-        return ResponseData.success(response, "OK", HttpStatus.OK);
+        return ResponseData.success(
+                response,
+                "Danh sách học sinh chưa điểm danh",
+                HttpStatus.OK
+        );
     }
 
+    // ================= TOP ABSENT =================
     @GetMapping("/top-absent")
     public ResponseEntity<?> topAbsent() {
 
         List<TopAbsentStudentResponse> response =
                 attendanceService.getTopAbsentStudents();
 
-        return ResponseData.success(response, "OK", HttpStatus.OK);
+        return ResponseData.success(
+                response,
+                "Danh sách học sinh nghỉ nhiều nhất",
+                HttpStatus.OK
+        );
     }
 
+    // ================= FILTER =================
     @GetMapping("/filter")
     public ResponseEntity<?> filter(
             @RequestParam LocalDate date,
@@ -272,11 +229,27 @@ public class AttendanceController {
         Page<AttendanceFilterResponse> response =
                 attendanceService.filterByStatus(date, status, pageable);
 
-        return ResponseData.success(response, "OK", HttpStatus.OK);
+        return ResponseData.success(response, "Thành công", HttpStatus.OK);
     }
 
+    // ================= GET BY DATE =================
+    @GetMapping("/date")
+    public ResponseEntity<?> getByDate(
+            @RequestParam LocalDate date,
+            Pageable pageable
+    ) {
 
+        Page<AttendanceDetailResponse> response =
+                attendanceService.getAttendanceByDate(date, pageable);
 
+        return ResponseData.success(
+                response,
+                "Lấy dữ liệu điểm danh theo ngày thành công",
+                HttpStatus.OK
+        );
+    }
+
+    // ================= CLASS HISTORY =================
     @GetMapping("/class/history/{classId}")
     public ResponseEntity<?> classHistory(
             @PathVariable Long classId,
@@ -288,6 +261,32 @@ public class AttendanceController {
         Page<ClassAttendanceHistoryResponse> response =
                 attendanceService.getClassAttendanceHistory(classId, fromDate, toDate, pageable);
 
-        return ResponseData.success(response, "OK", HttpStatus.OK);
+        return ResponseData.success(response, "Thành công", HttpStatus.OK);
+    }
+
+    // ================= TEACHER SUMMARY =================
+    @GetMapping("/teacher/summary")
+    public ResponseEntity<?> teacherSummary(
+            @RequestParam Long teacherId,
+            @RequestParam LocalDate date
+    ) {
+
+        List<TeacherAttendanceSummaryResponse> response =
+                attendanceService.getTeacherAttendanceSummary(teacherId, date);
+
+        return ResponseData.success(response, "Thành công", HttpStatus.OK);
+    }
+
+    // ================= DELETE =================
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> delete(@PathVariable Long id) {
+
+        attendanceService.delete(id);
+
+        return ResponseData.success(
+                null,
+                "Xóa điểm danh thành công",
+                HttpStatus.OK
+        );
     }
 }

@@ -31,10 +31,7 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -56,64 +53,60 @@ public class AttendanceServiceImpl implements AttendanceService {
 
         Long classId = classRepository.findByTeacher_Id(userId)
                 .orElseThrow(() ->
-                        new ClassRoomNotFoundException("Teacher dont have classroom"))
+                        new ClassRoomNotFoundException("Giáo viên chưa được phân lớp"))
                 .getId();
 
         LocalDate today = LocalDate.now();
-
-        long count = attendanceRepository.countByClassAndDateAndTeacher(
-                classId,
-                today,
-                userId
-        );
-
-        if (count > 0) {
-
-            return attendanceRepository
-                    .findByClassAndDateAndTeacher(classId, today, userId)
-                    .stream()
-                    .map(attendance -> AttendanceResponse.builder()
-                            .id(attendance.getId())
-                            .studentId(attendance.getStudent().getId())
-                            .studentName(attendance.getStudent().getFullName())
-                            .attendanceDate(attendance.getAttendanceDate())
-                            .status(attendance.getStatus())
-                            .note(attendance.getNote())
-                            .createdBy(attendance.getCreatedBy().getId())
-                            .createdAt(attendance.getCreatedAt())
-                            .updatedAt(attendance.getUpdatedAt())
-                            .build())
-                    .toList();
-        }
 
         User teacher = userServiceDomain.getByUserId(userId);
 
         List<Student> students =
                 studentRepository.findAllByClassEntity_IdOrderByFullNameAsc(classId);
 
-        List<Attendance> attendances = students.stream()
-                .map(student -> Attendance.builder()
-                        .student(student)
-                        .attendanceDate(today)
-                        .status("ABSENT")
-                        .note(null)
-                        .createdBy(teacher)
-                        .build())
-                .toList();
+        List<Attendance> existing = attendanceRepository
+                .findByClassAndDate(classId, today);
 
-        attendanceRepository.saveAll(attendances);
+        Map<Long, Attendance> existingMap = existing.stream()
+                .collect(Collectors.toMap(
+                        a -> a.getStudent().getId(),
+                        Function.identity()
+                ));
 
-        return attendances.stream()
-                .map(attendance -> AttendanceResponse.builder()
-                        .id(attendance.getId())
-                        .studentId(attendance.getStudent().getId())
-                        .studentName(attendance.getStudent().getFullName())
-                        .attendanceDate(attendance.getAttendanceDate())
-                        .status(attendance.getStatus())
-                        .note(attendance.getNote())
-                        .createdBy(attendance.getCreatedBy().getId())
-                        .createdAt(attendance.getCreatedAt())
-                        .updatedAt(attendance.getUpdatedAt())
+        List<Attendance> toSave = new ArrayList<>();
+
+        for (Student s : students) {
+            boolean exists = attendanceRepository
+                    .existsByStudent_IdAndAttendanceDate(s.getId(), today);
+
+            if (!exists) {
+                toSave.add(
+                        Attendance.builder()
+                                .student(s)
+                                .attendanceDate(today)
+                                .status("ABSENT")
+                                .note("")
+                                .createdBy(teacher)
+                                .build()
+                );
+            }
+        }
+
+        if (!toSave.isEmpty()) {
+            attendanceRepository.saveAll(toSave);
+            existing.addAll(toSave);
+        }
+
+        return existing.stream()
+                .map(a -> AttendanceResponse.builder()
+                        .id(a.getId())
+                        .studentId(a.getStudent().getId())
+                        .studentName(a.getStudent().getFullName())
+                        .attendanceDate(a.getAttendanceDate())
+                        .status(a.getStatus())
+                        .note(a.getNote())
+                        .createdBy(a.getCreatedBy().getId())
+                        .createdAt(a.getCreatedAt())
+                        .updatedAt(a.getUpdatedAt())
                         .build())
                 .toList();
     }
@@ -123,18 +116,10 @@ public class AttendanceServiceImpl implements AttendanceService {
     public List<AttendanceResponse> batchUpdate(List<UpdateAttendanceRequest> requests) {
 
         if (requests == null || requests.isEmpty()) {
-            throw new AttendanceNotFoundException("Attendance Not Found");
+            throw new AttendanceNotFoundException("Không tìm thấy dữ liệu điểm danh");
         }
 
         LocalDate today = LocalDate.now();
-
-//        AttendanceSetting setting = attendanceSettingRepository.findById(1L)
-//                .orElseThrow(() ->
-//                        new AttendanceSettingNotFoundException("Attendance setting not configured"));
-//
-//        if (LocalTime.now().isAfter(setting.getEndTime())) {
-//            throw new IllegalArgumentException("Attendance time is over");
-//        }
 
         List<Long> attendanceIds = requests.stream()
                 .map(UpdateAttendanceRequest::getAttendanceId)
@@ -150,23 +135,19 @@ public class AttendanceServiceImpl implements AttendanceService {
 
         List<AttendanceResponse> responses = new ArrayList<>();
 
-
         for (UpdateAttendanceRequest request : requests) {
 
             Attendance attendance = attendanceMap.get(request.getAttendanceId());
 
             if (attendance == null) {
                 throw new AttendanceNotFoundException(
-                        "Attendance not found with id: "
+                        "Không tìm thấy điểm danh với id: "
                                 + request.getAttendanceId());
             }
 
-            System.out.println("TODAY = " + LocalDate.now());
-            System.out.println("ATT DATE = " + attendance.getAttendanceDate());
-
             if (!attendance.getAttendanceDate().isEqual(today)) {
                 throw new IllegalArgumentException(
-                        "Cannot update past attendance records");
+                        "Không thể cập nhật điểm danh của ngày trước");
             }
 
             attendance.setStatus(request.getStatus());
@@ -191,7 +172,6 @@ public class AttendanceServiceImpl implements AttendanceService {
         return responses;
     }
 
-
     @Override
     @Transactional
     public AttendanceResponse update(Long id, UpdateAttendanceRequest request) {
@@ -199,25 +179,21 @@ public class AttendanceServiceImpl implements AttendanceService {
         Attendance attendance = attendanceRepository.findById(id)
                 .orElseThrow(() ->
                         new AttendanceNotFoundException(
-                                "Attendance not found with id: " + id));
+                                "Không tìm thấy điểm danh với id: " + id));
 
         LocalDate today = LocalDate.now();
 
         if (!attendance.getAttendanceDate().isEqual(today)) {
-            throw new IllegalArgumentException("Cannot update past attendance records");
+            throw new IllegalArgumentException("Không thể cập nhật điểm danh của ngày trước");
         }
 
         AttendanceSetting setting = attendanceSettingRepository.findById(1L)
-                .orElseThrow(() -> new RuntimeException("Attendance setting not configured"));
+                .orElseThrow(() -> new RuntimeException("Chưa cấu hình thời gian điểm danh"));
 
         LocalTime now = LocalTime.now();
 
-        LocalTime start = setting.getStartTime();
-        LocalTime end = setting.getEndTime();
-        LocalTime finalLimit = end.plusMinutes(setting.getAllowLateMinutes());
-
-        if (now.isAfter(end)) {
-            throw new IllegalArgumentException("Attendance time is over");
+        if (now.isAfter(setting.getEndTime())) {
+            throw new IllegalArgumentException("Đã hết thời gian điểm danh");
         }
 
         attendance.setStatus(request.getStatus());
@@ -239,21 +215,18 @@ public class AttendanceServiceImpl implements AttendanceService {
     @Transactional
     public void delete(Long id) {
         Attendance attendance = attendanceRepository.findById(id).orElseThrow(
-                () -> new AttendanceNotFoundException("Student not found with id:" + id)
+                () -> new AttendanceNotFoundException("Không tìm thấy học sinh với id: " + id)
         );
         attendanceRepository.delete(attendance);
     }
 
     @Override
     public List<AttendanceDateResponse> getAttendanceDates() {
-
         List<AttendanceDateProjection> projections =
                 attendanceRepository.getAttendanceDates();
 
         return projections.stream()
-                .map(p -> new AttendanceDateResponse(
-                        p.getAttendanceDate()
-                ))
+                .map(p -> new AttendanceDateResponse(p.getAttendanceDate()))
                 .toList();
     }
 
@@ -264,7 +237,7 @@ public class AttendanceServiceImpl implements AttendanceService {
 
         Long classId = classRepository.findByTeacher_Id(userId)
                 .orElseThrow(() ->
-                        new ClassRoomNotFoundException("Teacher dont have classroom"))
+                        new ClassRoomNotFoundException("Giáo viên chưa được phân lớp"))
                 .getId();
 
         return attendanceRepository
@@ -312,7 +285,7 @@ public class AttendanceServiceImpl implements AttendanceService {
 
         if (!classRepository.existsById(classId)) {
             throw new ClassRoomNotFoundException(
-                    "Class not found with id: " + classId
+                    "Không tìm thấy lớp với id: " + classId
             );
         }
 
@@ -326,7 +299,6 @@ public class AttendanceServiceImpl implements AttendanceService {
                 ))
                 .toList();
     }
-
 
     @Override
     public List<TeacherAttendanceSummaryResponse> getTeacherAttendanceSummary(
@@ -380,19 +352,18 @@ public class AttendanceServiceImpl implements AttendanceService {
 
         Long classId = classRepository.findByTeacher_Id(userId)
                 .orElseThrow(() ->
-                        new ClassRoomNotFoundException("Teacher dont have classroom"))
+                        new ClassRoomNotFoundException("Giáo viên chưa được phân lớp"))
                 .getId();
 
         if (date.isAfter(LocalDate.now())) {
             throw new IllegalArgumentException(
-                    "Date cannot be in the future"
+                    "Không thể chọn ngày trong tương lai"
             );
         }
 
         List<ClassAttendanceProjection> projections =
                 attendanceRepository.getClassAttendance(classId, date);
 
-        // 4. Map projection -> response DTO
         return projections.stream()
                 .map(p -> new ClassAttendanceResponse(
                         p.getStudentId(),
@@ -408,7 +379,7 @@ public class AttendanceServiceImpl implements AttendanceService {
 
         if (!studentRepository.existsById(studentId)) {
             throw new StudentNotFoundException(
-                    "Student not found with id: " + studentId
+                    "Không tìm thấy học sinh với id: " + studentId
             );
         }
 
@@ -518,7 +489,7 @@ public class AttendanceServiceImpl implements AttendanceService {
 
         if (!classRepository.existsById(classId)) {
             throw new ClassRoomNotFoundException(
-                    "Class not found with id: " + classId
+                    "Không tìm thấy lớp với id: " + classId
             );
         }
 

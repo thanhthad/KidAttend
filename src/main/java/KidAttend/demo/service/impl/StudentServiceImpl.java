@@ -41,7 +41,7 @@ public class StudentServiceImpl implements StudentService {
                 studentRepository.existsByParentPhone(request.getParentPhone())) {
 
             throw new StudentAlreadyExistsException(
-                    "Parent phone already exists: " + request.getParentPhone()
+                    "Số điện thoại phụ huynh đã tồn tại: " + request.getParentPhone()
             );
         }
 
@@ -49,16 +49,18 @@ public class StudentServiceImpl implements StudentService {
                 studentRepository.existsByParentEmail(request.getParentEmail())) {
 
             throw new StudentAlreadyExistsException(
-                    "Parent email already exists: " + request.getParentEmail()
+                    "Email phụ huynh đã tồn tại: " + request.getParentEmail()
             );
         }
+
         ClassEntity classEntity = getClassById(request.getClassId());
 
-        long count = studentRepository.countByClassEntityIdAndStatus(classEntity.getId(),"ACTIVE");
+        long count = studentRepository.countByClassEntityIdAndStatus(classEntity.getId(), "ACTIVE");
 
         if (count >= classEntity.getCapacity()) {
             throw new IllegalArgumentException(
-                    "Class is full with class id: " + classEntity.getId());
+                    "Lớp đã đầy với id: " + classEntity.getId()
+            );
         }
 
         validateAgeForKindergarten(request.getDateOfBirth());
@@ -70,7 +72,6 @@ public class StudentServiceImpl implements StudentService {
         student.setDateOfBirth(request.getDateOfBirth());
         student.setParentName(request.getParentName());
 
-        // optional fields
         student.setParentPhone(request.getParentPhone());
         student.setParentEmail(request.getParentEmail());
 
@@ -82,7 +83,7 @@ public class StudentServiceImpl implements StudentService {
         return mapToResponse(student);
     }
 
-    // ================= UPDATE (PATCH STYLE) =================
+    // ================= UPDATE =================
     @Override
     public StudentResponse update(Long id, UpdateStudentRequest request) {
 
@@ -100,7 +101,7 @@ public class StudentServiceImpl implements StudentService {
 
                 if (count >= newClass.getCapacity()) {
                     throw new IllegalArgumentException(
-                            "Target class is full: " + newClass.getId()
+                            "Lớp đích đã đầy: " + newClass.getId()
                     );
                 }
             }
@@ -160,7 +161,6 @@ public class StudentServiceImpl implements StudentService {
     // ================= GET BY ID =================
     @Override
     public StudentResponse getById(Long id) {
-
         return mapToResponse(getStudentById(id));
     }
 
@@ -173,26 +173,20 @@ public class StudentServiceImpl implements StudentService {
     private StudentResponse convertToResponse(Student student) {
         return StudentResponse.builder()
                 .id(student.getId())
-
                 .classId(student.getClassEntity() != null
                         ? student.getClassEntity().getId()
                         : null)
-
                 .className(student.getClassEntity() != null
                         ? student.getClassEntity().getName()
                         : null)
-
                 .fullName(student.getFullName())
                 .gender(student.getGender())
                 .dateOfBirth(student.getDateOfBirth())
-
                 .parentName(student.getParentName())
                 .parentPhone(student.getParentPhone())
                 .parentEmail(student.getParentEmail())
-
                 .address(student.getAddress())
                 .status(student.getStatus())
-
                 .build();
     }
 
@@ -201,7 +195,8 @@ public class StudentServiceImpl implements StudentService {
 
         ClassEntity classEntity = getClassById(classId);
 
-        List<Student> students = studentRepository.findAllByClassEntity_IdOrderByFullNameAsc(classEntity.getId());
+        List<Student> students =
+                studentRepository.findAllByClassEntity_IdOrderByFullNameAsc(classEntity.getId());
 
         return students.stream()
                 .map(this::mapToResponse)
@@ -210,13 +205,18 @@ public class StudentServiceImpl implements StudentService {
 
     @Override
     public List<StudentResponse> getAllByMe() {
+
         Long userId = SecurityUtils.getCurrentUserId();
-        Long classId = classRepository.findByTeacher_Id(userId).orElseThrow(
-                () -> new ClassRoomNotFoundException("Teacher didn't sign class")
-        ).getId();
+
+        Long classId = classRepository.findByTeacher_Id(userId)
+                .orElseThrow(() ->
+                        new ClassRoomNotFoundException("Giáo viên chưa được phân lớp")
+                ).getId();
+
         ClassEntity classEntity = getClassById(classId);
 
-        List<Student> students = studentRepository.findAllByClassEntity_IdOrderByFullNameAsc(classEntity.getId());
+        List<Student> students =
+                studentRepository.findAllByClassEntity_IdOrderByFullNameAsc(classEntity.getId());
 
         return students.stream()
                 .map(this::mapToResponse)
@@ -235,34 +235,34 @@ public class StudentServiceImpl implements StudentService {
     }
 
     // ================= HELPERS =================
-
     private void validateAgeForKindergarten(LocalDate dob) {
 
         int age = java.time.Period.between(dob, java.time.LocalDate.now()).getYears();
 
-        // mầm non: 1 - 6 tuổi
         if (age < 1 || age > 6) {
             throw new InvalidAgeException(
-                    "Student age must be between 1 and 6 years old"
+                    "Độ tuổi học sinh phải từ 1 đến 6 tuổi"
             );
         }
     }
 
     private Student getStudentById(Long id) {
         return studentRepository.findById(id)
-                .orElseThrow(() -> new StudentNotFoundException("Student not found: " + id));
+                .orElseThrow(() ->
+                        new StudentNotFoundException("Không tìm thấy học sinh: " + id));
     }
 
     private ClassEntity getClassById(Long classId) {
         return classRepository.findById(classId)
-                .orElseThrow(() -> new ClassRoomNotFoundException("Class not found: " + classId));
+                .orElseThrow(() ->
+                        new ClassRoomNotFoundException("Không tìm thấy lớp: " + classId));
     }
 
     private void validatePhoneDuplicate(String phone, Long id) {
         studentRepository.findByParentPhone(phone)
                 .ifPresent(s -> {
                     if (!s.getId().equals(id)) {
-                        throw new StudentAlreadyExistsException("Parent phone already exists");
+                        throw new StudentAlreadyExistsException("Số điện thoại phụ huynh đã tồn tại");
                     }
                 });
     }
@@ -271,7 +271,7 @@ public class StudentServiceImpl implements StudentService {
         studentRepository.findByParentEmail(email)
                 .ifPresent(s -> {
                     if (!s.getId().equals(id)) {
-                        throw new StudentAlreadyExistsException("Parent email already exists");
+                        throw new StudentAlreadyExistsException("Email phụ huynh đã tồn tại");
                     }
                 });
     }
@@ -302,32 +302,33 @@ public class StudentServiceImpl implements StudentService {
     public List<StudentResponse> bulkCreate(BulkCreateStudentRequest request) {
 
         ClassEntity classEntity = classRepository.findById(request.getClassId())
-                .orElseThrow(() -> new ClassRoomNotFoundException("Class not found: " + request.getClassId()));
+                .orElseThrow(() ->
+                        new ClassRoomNotFoundException("Không tìm thấy lớp: " + request.getClassId()));
 
         List<Student> students = new ArrayList<>();
 
         for (BulkStudentRequest req : request.getStudents()) {
 
-            // check duplicate phone/email (DB)
             if (studentRepository.existsByParentPhone(req.getParentPhone())) {
                 throw new StudentAlreadyExistsException(
-                        "Parent phone already exists: " + req.getParentPhone()
+                        "Số điện thoại phụ huynh đã tồn tại: " + req.getParentPhone()
                 );
             }
 
             if (studentRepository.existsByParentEmail(req.getParentEmail())) {
                 throw new StudentAlreadyExistsException(
-                        "Parent email already exists: " + req.getParentEmail()
+                        "Email phụ huynh đã tồn tại: " + req.getParentEmail()
                 );
             }
 
             validateAgeForKindergarten(req.getDateOfBirth());
 
-            long current = studentRepository.countByClassEntityIdAndStatus(classEntity.getId(),"ACTIVE");
+            long current =
+                    studentRepository.countByClassEntityIdAndStatus(classEntity.getId(), "ACTIVE");
             long incoming = request.getStudents().size();
 
             if (current + incoming > classEntity.getCapacity()) {
-                throw new IllegalArgumentException("Class is full");
+                throw new IllegalArgumentException("Lớp đã đầy");
             }
 
             Student student = new Student();
@@ -344,10 +345,8 @@ public class StudentServiceImpl implements StudentService {
             students.add(student);
         }
 
-        // 3. save batch
         List<Student> saved = studentRepository.saveAll(students);
 
-        // 4. map response
         return saved.stream()
                 .map(this::mapToResponse)
                 .toList();

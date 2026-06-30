@@ -28,7 +28,6 @@ public class UserController {
 
     private final UserService userService;
 
-
     // ================= UPDATE USER INFO =================
     @PutMapping
     public ResponseEntity<?> updateUserInfo(
@@ -40,13 +39,12 @@ public class UserController {
 
         return ResponseData.success(
                 response,
-                "Update user info successfully",
+                "Cập nhật thông tin người dùng thành công",
                 HttpStatus.OK
         );
     }
 
-
-    // ================= GET BY JWTTOKEN =================
+    // ================= GET CURRENT USER =================
     @GetMapping("/me")
     public ResponseEntity<?> getUserByMe() {
 
@@ -54,7 +52,7 @@ public class UserController {
 
         return ResponseData.success(
                 response,
-                "Get user successfully",
+                "Lấy thông tin người dùng thành công",
                 HttpStatus.OK
         );
     }
@@ -66,11 +64,11 @@ public class UserController {
     ) {
 
         UserResponse response =
-                userService.changePassword( request);
+                userService.changePassword(request);
 
         return ResponseData.success(
                 response,
-                "Change password successfully",
+                "Đổi mật khẩu thành công",
                 HttpStatus.OK
         );
     }
@@ -83,7 +81,7 @@ public class UserController {
 
         return ResponseData.success(
                 response,
-                "Get all users successfully",
+                "Lấy danh sách người dùng thành công",
                 HttpStatus.OK
         );
     }
@@ -100,7 +98,7 @@ public class UserController {
 
         return ResponseData.success(
                 response,
-                "Search users by full name successfully",
+                "Tìm kiếm người dùng theo tên thành công",
                 HttpStatus.OK
         );
     }
@@ -117,7 +115,7 @@ public class UserController {
 
         return ResponseData.success(
                 response,
-                "Search users by phone successfully",
+                "Tìm kiếm người dùng theo số điện thoại thành công",
                 HttpStatus.OK
         );
     }
@@ -130,11 +128,10 @@ public class UserController {
 
         return ResponseData.success(
                 response,
-                "Get user successfully",
+                "Lấy thông tin người dùng thành công",
                 HttpStatus.OK
         );
     }
-
 
     // ================= GET BY EMAIL =================
     @GetMapping("/by-email")
@@ -144,11 +141,10 @@ public class UserController {
 
         return ResponseData.success(
                 response,
-                "Get user by email successfully",
+                "Lấy thông tin người dùng theo email thành công",
                 HttpStatus.OK
         );
     }
-
 
     // ================= DELETE USER =================
     @DeleteMapping("/{id}")
@@ -158,11 +154,12 @@ public class UserController {
 
         return ResponseData.success(
                 null,
-                "Delete user successfully",
+                "Xóa người dùng thành công",
                 HttpStatus.OK
         );
     }
 
+    // ================= CREATE USER =================
     @PostMapping
     public ResponseEntity<?> createUsers(
             @Valid @RequestBody UserCreateRequest request
@@ -172,11 +169,12 @@ public class UserController {
 
         return ResponseData.success(
                 null,
-                "Create user successfully",
+                "Tạo người dùng thành công",
                 HttpStatus.CREATED
         );
     }
 
+    // ================= BULK CREATE USERS =================
     @PostMapping("/bulk")
     public ResponseEntity<?> createUsers(
             @Valid @RequestBody BulkCreateUserRequest request
@@ -187,7 +185,7 @@ public class UserController {
 
         return ResponseData.success(
                 response,
-                "Create users successfully",
+                "Tạo nhiều người dùng thành công",
                 HttpStatus.CREATED
         );
     }

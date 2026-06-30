@@ -16,7 +16,6 @@ import KidAttend.demo.repository.UserRepository;
 import KidAttend.demo.security.userdetails.SecurityUtils;
 import KidAttend.demo.service.UserService;
 import lombok.RequiredArgsConstructor;
-import org.apache.catalina.security.SecurityUtil;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -44,18 +43,18 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public Page<UserResponse> findByFullName(String userName, Pageable pageable) {
-        return userRepository.findByFullName(userName,pageable);
+        return userRepository.findByFullName(userName, pageable);
     }
 
     @Override
     public Page<UserResponse> findByPhone(String phoneNumber, Pageable pageable) {
-        return userRepository.findByPhone(phoneNumber,pageable);
+        return userRepository.findByPhone(phoneNumber, pageable);
     }
 
     @Override
     public UserResponse findById(Long id) {
         User user = userRepository.findById(id)
-                .orElseThrow(() -> new UserNotFoundException("User not found"));
+                .orElseThrow(() -> new UserNotFoundException("Không tìm thấy người dùng"));
 
         return mapToResponse(user);
     }
@@ -64,20 +63,19 @@ public class UserServiceImpl implements UserService {
     public UserResponse findByMe() {
         Long id = SecurityUtils.getCurrentUserId();
         User user = userRepository.findById(id)
-                .orElseThrow(() -> new UserNotFoundException("User not found"));
+                .orElseThrow(() -> new UserNotFoundException("Không tìm thấy người dùng"));
 
         return mapToResponse(user);
     }
-
 
     @Override
     public UserResponse changePassword(UpdateUserPassword req) {
         Long userId = SecurityUtils.getCurrentUserId();
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new UserNotFoundException("User not found"));
+                .orElseThrow(() -> new UserNotFoundException("Không tìm thấy người dùng"));
 
         if (!passwordEncoder.matches(req.getOldPassword(), user.getPasswordHash())) {
-            throw new RuntimeException("Old password is incorrect");
+            throw new RuntimeException("Mật khẩu cũ không đúng");
         }
 
         user.setPasswordHash(passwordEncoder.encode(req.getNewPassword()));
@@ -90,7 +88,7 @@ public class UserServiceImpl implements UserService {
         Long userId = SecurityUtils.getCurrentUserId();
 
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new UserNotFoundException("User not found"));
+                .orElseThrow(() -> new UserNotFoundException("Không tìm thấy người dùng"));
 
         if (req.getFullName() != null) {
             user.setFullName(req.getFullName());
@@ -108,12 +106,10 @@ public class UserServiceImpl implements UserService {
         return mapToResponse(user);
     }
 
-
-    // =========================
     @Override
     public UserResponse findByEmail(String email) {
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new UserNotFoundException("User not found"));
+                .orElseThrow(() -> new UserNotFoundException("Không tìm thấy người dùng"));
 
         return mapToResponse(user);
     }
@@ -122,19 +118,19 @@ public class UserServiceImpl implements UserService {
     public void deleteUser(Long id) {
 
         User user = userRepository.findById(id)
-                .orElseThrow(() -> new UserNotFoundException("User not found"));
+                .orElseThrow(() -> new UserNotFoundException("Không tìm thấy người dùng"));
 
         boolean hasAttendance = attendanceRepository.existsByCreatedById(id);
         if (hasAttendance) {
             throw new UserAlreadyExistsException(
-                    "User đã tạo dữ liệu điểm danh, không thể xóa"
+                    "Người dùng đã tạo dữ liệu điểm danh, không thể xoá"
             );
         }
 
         boolean isTeacher = classRepository.existsByTeacherId(id);
         if (isTeacher) {
             throw new UserAlreadyExistsException(
-                    "User đang là giáo viên của lớp, không thể xóa"
+                    "Người dùng đang là giáo viên của lớp, không thể xoá"
             );
         }
 
@@ -162,19 +158,19 @@ public class UserServiceImpl implements UserService {
         for (var dto : request.getUsers()) {
 
             if (!emails.add(dto.getEmail())) {
-                throw new UserAlreadyExistsException("Duplicate email in request: " + dto.getEmail());
+                throw new UserAlreadyExistsException("Trùng email trong request: " + dto.getEmail());
             }
 
             if (dto.getPhone() != null && !phones.add(dto.getPhone())) {
-                throw new PhoneAlreadyExistsException("Duplicate phone in request: " + dto.getPhone());
+                throw new PhoneAlreadyExistsException("Trùng số điện thoại trong request: " + dto.getPhone());
             }
 
             if (userRepository.existsByEmail(dto.getEmail())) {
-                throw new EmailAlreadyExistsException("Email already exists: " + dto.getEmail());
+                throw new EmailAlreadyExistsException("Email đã tồn tại: " + dto.getEmail());
             }
 
             if (dto.getPhone() != null && userRepository.existsByPhone(dto.getPhone())) {
-                throw new PhoneAlreadyExistsException("Phone already exists: " + dto.getPhone());
+                throw new PhoneAlreadyExistsException("Số điện thoại đã tồn tại: " + dto.getPhone());
             }
 
             users.add(User.builder()
@@ -198,12 +194,13 @@ public class UserServiceImpl implements UserService {
     public void create(UserCreateRequest dto) {
 
         if (userRepository.existsByEmail(dto.getEmail())) {
-            throw new EmailAlreadyExistsException("Email already exists: " + dto.getEmail());
+            throw new EmailAlreadyExistsException("Email đã tồn tại: " + dto.getEmail());
         }
 
         if (dto.getPhone() != null && userRepository.existsByPhone(dto.getPhone())) {
-            throw new PhoneAlreadyExistsException("Phone already exists: " + dto.getPhone());
+            throw new PhoneAlreadyExistsException("Số điện thoại đã tồn tại: " + dto.getPhone());
         }
+
         User user = User.builder()
                 .fullName(dto.getFullName())
                 .email(dto.getEmail())
@@ -212,5 +209,7 @@ public class UserServiceImpl implements UserService {
                 .role("USER")
                 .status("ACTIVE")
                 .build();
+
+        userRepository.save(user);
     }
 }

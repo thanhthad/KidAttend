@@ -1,6 +1,5 @@
 package KidAttend.demo.controller;
 
-
 import KidAttend.demo.common.response.ResponseData;
 import KidAttend.demo.dto.request.auth.LoginRequest;
 import KidAttend.demo.dto.request.auth.RefreshTokenRequest;
@@ -34,7 +33,7 @@ public class AuthController {
 
         return ResponseData.success(
                 response,
-                "Login successfully",
+                "Đăng nhập thành công",
                 HttpStatus.OK
         );
     }
@@ -48,7 +47,7 @@ public class AuthController {
 
         return ResponseData.success(
                 response,
-                "Login successfully",
+                "Đăng ký thành công",
                 HttpStatus.OK
         );
     }
@@ -59,11 +58,11 @@ public class AuthController {
             @Valid @RequestBody RefreshTokenRequest request
     ) {
 
-        AuthResponse authResponse  = authService.generateAccessToken(request.getRefreshToken());
+        AuthResponse authResponse = authService.generateAccessToken(request.getRefreshToken());
 
         return ResponseData.success(
                 authResponse,
-                "Create new access token successfully",
+                "Tạo access token mới thành công",
                 HttpStatus.OK
         );
     }
@@ -78,7 +77,7 @@ public class AuthController {
 
         return ResponseData.success(
                 null,
-                "Logout successfully",
+                "Đăng xuất thành công",
                 HttpStatus.OK
         );
     }

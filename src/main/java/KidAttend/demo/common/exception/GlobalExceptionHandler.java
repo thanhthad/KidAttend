@@ -1,4 +1,5 @@
 package KidAttend.demo.common.exception;
+
 import KidAttend.demo.common.response.ApiResponse;
 import KidAttend.demo.common.response.ResponseData;
 import KidAttend.demo.exception.attendance.AttendanceAlreadyExistsException;
@@ -27,7 +28,6 @@ import org.springframework.web.method.annotation.MethodArgumentTypeMismatchExcep
 
 import java.util.HashMap;
 import java.util.Map;
-
 
 @RestControllerAdvice
 @Slf4j
@@ -65,7 +65,6 @@ public class GlobalExceptionHandler {
         return ResponseData.fail(ex.getMessage(), HttpStatus.CONFLICT);
     }
 
-
     // ================= STUDENT =================
     @ExceptionHandler(StudentNotFoundException.class)
     public ResponseEntity<ApiResponse<Object>> handleStudentNotFound(StudentNotFoundException ex) {
@@ -85,28 +84,28 @@ public class GlobalExceptionHandler {
     // ================= REFRESH TOKEN =================
     @ExceptionHandler(InvalidRefreshTokenException.class)
     public ResponseEntity<ApiResponse<Object>> handleInvalidRefreshToken(InvalidRefreshTokenException ex) {
-        return ResponseData.fail("Invalid refresh token", HttpStatus.UNAUTHORIZED);
+        return ResponseData.fail("Token làm mới không hợp lệ", HttpStatus.UNAUTHORIZED);
     }
 
     @ExceptionHandler(RefreshTokenExpiredException.class)
     public ResponseEntity<ApiResponse<Object>> handleExpiredRefreshToken(RefreshTokenExpiredException ex) {
-        return ResponseData.fail("Refresh token expired", HttpStatus.UNAUTHORIZED);
+        return ResponseData.fail("Token làm mới đã hết hạn", HttpStatus.UNAUTHORIZED);
     }
 
     @ExceptionHandler(RefreshTokenRevokedException.class)
     public ResponseEntity<ApiResponse<Object>> handleRevokedRefreshToken(RefreshTokenRevokedException ex) {
-        return ResponseData.fail("Refresh token revoked", HttpStatus.UNAUTHORIZED);
+        return ResponseData.fail("Token làm mới đã bị thu hồi", HttpStatus.UNAUTHORIZED);
     }
 
     @ExceptionHandler(BadCredentialsException.class)
     public ResponseEntity<ApiResponse<Object>> handleBadCredentials(BadCredentialsException ex) {
-        return ResponseData.fail("Invalid username or password", HttpStatus.UNAUTHORIZED);
+        return ResponseData.fail("Tên đăng nhập hoặc mật khẩu không đúng", HttpStatus.UNAUTHORIZED);
     }
 
     // ================= VALIDATION =================
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
     public ResponseEntity<ApiResponse<Object>> handleTypeMismatch(MethodArgumentTypeMismatchException ex) {
-        return ResponseData.fail("Invalid parameter type", HttpStatus.BAD_REQUEST);
+        return ResponseData.fail("Sai kiểu dữ liệu tham số", HttpStatus.BAD_REQUEST);
     }
 
     @ExceptionHandler(AttendanceSettingNotFoundException.class)
@@ -129,7 +128,7 @@ public class GlobalExceptionHandler {
 
         ApiResponse<Object> response = new ApiResponse<>();
         response.setSuccess(false);
-        response.setMessage("Validation failed");
+        response.setMessage("Dữ liệu không hợp lệ");
         response.setData(errors);
 
         return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
@@ -154,19 +153,19 @@ public class GlobalExceptionHandler {
             HttpMessageNotReadableException ex) {
 
         return ResponseData.fail(
-                "Invalid request body format",
+                "Định dạng dữ liệu gửi lên không hợp lệ",
                 HttpStatus.BAD_REQUEST
         );
     }
 
-    // ================= FALLBACK (ONLY IMPORTANT LOG) =================
+    // ================= FALLBACK =================
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResponse<Object>> handleException(Exception ex) {
 
         log.error("Exception type: {}", ex.getClass().getName(), ex);
 
         return ResponseData.fail(
-                "Internal server error",
+                "Lỗi hệ thống nội bộ",
                 HttpStatus.INTERNAL_SERVER_ERROR
         );
     }

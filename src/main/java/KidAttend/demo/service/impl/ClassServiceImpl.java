@@ -35,7 +35,6 @@ public class ClassServiceImpl implements ClassService {
     private final UserRepository userRepository;
 
     // ================= CREATE =================
-
     @Override
     public ClassResponse create(CreateClassRequest request) {
 
@@ -46,7 +45,7 @@ public class ClassServiceImpl implements ClassService {
             teacher = userServiceDomain.getByUserId(request.getTeacherId());
 
             if (classRepository.existsByTeacherId(request.getTeacherId())) {
-                throw new ClassRoomAlreadyExistsException("Teacher already assigned to another class");
+                throw new ClassRoomAlreadyExistsException("Giáo viên đã được phân vào lớp khác");
             }
         }
 
@@ -63,18 +62,17 @@ public class ClassServiceImpl implements ClassService {
     }
 
     // ================= UPDATE =================
-
     @Override
     public ClassResponse update(Long id, UpdateClassRequest request) {
 
         ClassEntity entity = classRepository.findById(id)
                 .orElseThrow(() ->
-                        new ClassRoomNotFoundException("Class not found: " + id));
+                        new ClassRoomNotFoundException("Không tìm thấy lớp với id: " + id));
 
         // ================= NAME =================
         if (request.getName() != null) {
             if (request.getName().isBlank()) {
-                throw new IllegalArgumentException("Class name cannot be blank");
+                throw new IllegalArgumentException("Tên lớp không được để trống");
             }
             entity.setName(request.getName());
         }
@@ -83,11 +81,11 @@ public class ClassServiceImpl implements ClassService {
         if (request.getAge() != null) {
 
             if (request.getAge() <= 0) {
-                throw new IllegalArgumentException("Age must be > 0");
+                throw new IllegalArgumentException("Độ tuổi phải lớn hơn 0");
             }
 
-            if(request.getAge() > 6 ){
-                throw  new IllegalArgumentException("Age must be > 6");
+            if (request.getAge() > 6) {
+                throw new IllegalArgumentException("Độ tuổi không được lớn hơn 6");
             }
 
             entity.setAge(request.getAge());
@@ -97,10 +95,10 @@ public class ClassServiceImpl implements ClassService {
         if (request.getCapacity() != null) {
 
             if (request.getCapacity() <= 0) {
-                throw new IllegalArgumentException("Capacity must be > 0");
+                throw new IllegalArgumentException("Sức chứa phải lớn hơn 0");
             }
             if (request.getCapacity() > 50) {
-                throw new IllegalArgumentException("Capacity must be > 50");
+                throw new IllegalArgumentException("Sức chứa không được vượt quá 50");
             }
 
             long activeCount = studentRepository
@@ -108,7 +106,7 @@ public class ClassServiceImpl implements ClassService {
 
             if (request.getCapacity() < activeCount) {
                 throw new IllegalArgumentException(
-                        "Capacity cannot be lower than current ACTIVE students: " + activeCount
+                        "Sức chứa không được nhỏ hơn số học sinh hiện tại: " + activeCount
                 );
             }
 
@@ -118,7 +116,7 @@ public class ClassServiceImpl implements ClassService {
         // ================= DESCRIPTION =================
         if (request.getDescription() != null) {
             if (request.getDescription().isBlank()) {
-                throw new IllegalArgumentException("Description cannot be blank");
+                throw new IllegalArgumentException("Mô tả không được để trống");
             }
             entity.setDescription(request.getDescription());
         }
@@ -141,7 +139,7 @@ public class ClassServiceImpl implements ClassService {
             boolean existing = classRepository.existsByTeacherId(request.getTeacherId());
 
             if (existing) {
-                throw new IllegalArgumentException("Teacher already assigned to another class");
+                throw new IllegalArgumentException("Giáo viên đã được phân vào lớp khác");
             }
 
             entity.setTeacher(teacher);
@@ -151,26 +149,27 @@ public class ClassServiceImpl implements ClassService {
     }
 
     // ================= DELETE =================
-
     @Override
     public void delete(Long id) {
 
         ClassEntity entity = classRepository.findById(id)
-                .orElseThrow(() -> new ClassRoomNotFoundException("Class not found: " + id));
+                .orElseThrow(() ->
+                        new ClassRoomNotFoundException("Không tìm thấy lớp với id: " + id));
 
-        if(studentRepository.existsByClassEntity_Id(id)){
-            throw new StudentAlreadyExistsException("Student already have class records");
+        if (studentRepository.existsByClassEntity_Id(id)) {
+            throw new StudentAlreadyExistsException("Không thể xóa lớp vì vẫn còn học sinh đang thuộc lớp này");
         }
+
         classRepository.delete(entity);
     }
 
     // ================= GET BY ID =================
-
     @Override
     public ClassResponse getById(Long id) {
 
         ClassEntity entity = classRepository.findById(id)
-                .orElseThrow(() -> new ClassRoomNotFoundException("Class not found: " + id));
+                .orElseThrow(() ->
+                        new ClassRoomNotFoundException("Không tìm thấy lớp với id: " + id));
 
         return mapEntityToResponse(entity);
     }
@@ -178,7 +177,8 @@ public class ClassServiceImpl implements ClassService {
     @Override
     public ClassResponse getByTeacherId(Long id) {
         ClassEntity entity = classRepository.findByTeacher_Id(id)
-                .orElseThrow(() -> new UserNotFoundException("Teacher not found with id:" + id));
+                .orElseThrow(() ->
+                        new UserNotFoundException("Không tìm thấy giáo viên với id: " + id));
         return mapEntityToResponse(entity);
     }
 
@@ -186,27 +186,26 @@ public class ClassServiceImpl implements ClassService {
     public ClassResponse getByClassByMe() {
         Long id = SecurityUtils.getCurrentUserId();
         ClassEntity entity = classRepository.findByTeacher_Id(id)
-                .orElseThrow(() -> new UserNotFoundException("Teacher not found with id:" + id));
+                .orElseThrow(() ->
+                        new UserNotFoundException("Không tìm thấy giáo viên với id: " + id));
         return mapEntityToResponse(entity);
     }
 
     // ================= GET ALL =================
-
     @Override
     public Page<ClassResponse> getAll(Pageable pageable) {
-
         return classRepository.findAllWithTeacherAndCount(pageable)
                 .map(this::mapProjectionToResponse);
     }
 
-    // ================= SEARCH (PROJECTION) =================
-
+    // ================= SEARCH =================
     @Override
     public Page<ClassResponse> search(ClassSearchRequest request, Pageable pageable) {
 
-        if(request.getName() == null){
+        if (request.getName() == null) {
             request.setName("");
         }
+
         return classRepository.searchClasses(
                 request.getName(),
                 request.getAge(),
@@ -236,10 +235,9 @@ public class ClassServiceImpl implements ClassService {
     }
 
     // ================= ENTITY MAPPER =================
-
     private ClassResponse mapEntityToResponse(ClassEntity entity) {
 
-        Long studentCount = studentRepository.countByClassEntityIdAndStatus(entity.getId(),"ACTIVE");
+        Long studentCount = studentRepository.countByClassEntityIdAndStatus(entity.getId(), "ACTIVE");
 
         TeacherResponse teacher = null;
 
@@ -265,7 +263,6 @@ public class ClassServiceImpl implements ClassService {
     }
 
     // ================= PROJECTION MAPPER =================
-
     private ClassResponse mapProjectionToResponse(ClassProjection p) {
 
         TeacherResponse teacher = null;
@@ -297,7 +294,7 @@ public class ClassServiceImpl implements ClassService {
 
         if (age < 1 || age > 6) {
             throw new InvalidAgeException(
-                    "Student age must be between 1 and 6 years old"
+                    "Độ tuổi học sinh phải nằm trong khoảng 1 đến 6 tuổi"
             );
         }
     }

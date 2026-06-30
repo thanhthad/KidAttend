@@ -28,7 +28,7 @@ public class ClassController {
 
     private final ClassService classService;
 
-    // ================= GET CLASS BY TEACHERID =================
+    // ================= GET CLASS BY TEACHER =================
     @GetMapping("/teacher/me")
     public ResponseEntity<?> getClassByMe() {
 
@@ -37,7 +37,7 @@ public class ClassController {
 
         return ResponseData.success(
                 response,
-                "Get class successfully",
+                "Lấy thông tin lớp học thành công",
                 HttpStatus.OK
         );
     }
@@ -51,7 +51,7 @@ public class ClassController {
 
         return ResponseData.success(
                 response,
-                "Get all classes successfully",
+                "Lấy danh sách lớp học thành công",
                 HttpStatus.OK
         );
     }
@@ -68,28 +68,26 @@ public class ClassController {
 
         return ResponseData.success(
                 response,
-                "Search classes successfully",
+                "Tìm kiếm lớp học thành công",
                 HttpStatus.OK
         );
     }
 
     // ================= GET CLASS BY ID =================
     @GetMapping("/{id}")
-    public ResponseEntity<?> getClassById(
-            @PathVariable Long id
-    ) {
+    public ResponseEntity<?> getClassById(@PathVariable Long id) {
 
         ClassResponse response =
                 classService.getById(id);
 
         return ResponseData.success(
                 response,
-                "Get class successfully",
+                "Lấy thông tin lớp học thành công",
                 HttpStatus.OK
         );
     }
 
-    // ================= GET CLASS BY TEACHERID =================
+    // ================= GET CLASS BY TEACHER ID =================
     @GetMapping("/teacher/{teacherId}")
     public ResponseEntity<?> getClassByTeacherId(@PathVariable Long teacherId) {
 
@@ -98,11 +96,10 @@ public class ClassController {
 
         return ResponseData.success(
                 response,
-                "Get class successfully",
+                "Lấy thông tin lớp theo giáo viên thành công",
                 HttpStatus.OK
         );
     }
-
 
     // ================= CREATE CLASS =================
     @PostMapping
@@ -115,11 +112,12 @@ public class ClassController {
 
         return ResponseData.success(
                 response,
-                "Create class successfully",
+                "Tạo lớp học thành công",
                 HttpStatus.CREATED
         );
     }
 
+    // ================= GET UNASSIGNED TEACHERS =================
     @GetMapping("/teachers/unassigned")
     public ResponseEntity<?> getUnassignedTeachers() {
 
@@ -127,7 +125,7 @@ public class ClassController {
 
         return ResponseData.success(
                 response,
-                "Get unassigned teachers successfully",
+                "Lấy danh sách giáo viên chưa được phân lớp thành công",
                 HttpStatus.OK
         );
     }
@@ -143,24 +141,21 @@ public class ClassController {
 
         return ResponseData.success(
                 response,
-                "Update class successfully",
+                "Cập nhật lớp học thành công",
                 HttpStatus.OK
         );
     }
 
     // ================= DELETE CLASS =================
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> deleteClass(
-            @PathVariable Long id
-    ) {
+    public ResponseEntity<?> deleteClass(@PathVariable Long id) {
 
         classService.delete(id);
 
         return ResponseData.success(
                 null,
-                "Delete class successfully",
+                "Xóa lớp học thành công",
                 HttpStatus.OK
         );
     }
-
 }
