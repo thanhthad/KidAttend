@@ -11,16 +11,16 @@ import lombok.Setter;
 @Setter
 public class UpdateAttendanceRequest {
 
-    @NotNull
+    @NotNull(message = "attendanceId không được để trống")
     private Long attendanceId;
 
-    @NotBlank(message = "status must not be blank")
+    @NotBlank(message = "Trạng thái không được để trống")
     @Pattern(
             regexp = "PRESENT|ABSENT",
-            message = "status must be PRESENT or ABSENT"
+            message = "Trạng thái chỉ được là PRESENT hoặc ABSENT"
     )
     private String status;
 
-    @Size(max = 255, message = "note must not exceed 255 characters")
+    @Size(max = 255, message = "Ghi chú không được vượt quá 255 ký tự")
     private String note;
 }

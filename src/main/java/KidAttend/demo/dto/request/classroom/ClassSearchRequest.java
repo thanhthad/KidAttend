@@ -8,15 +8,15 @@ import lombok.*;
 @Setter
 public class ClassSearchRequest {
 
-    @Size(max = 100, message = "Name must not exceed 100 characters")
+    @Size(max = 100, message = "Tên không được vượt quá 100 ký tự")
     private String name;
 
-    @Min(value = 1, message = "Age must be >= 1")
-    @Max(value = 100, message = "Age must be <= 100")
+    @Min(value = 1, message = "Tuổi phải lớn hơn hoặc bằng 1")
+    @Max(value = 100, message = "Tuổi phải nhỏ hơn hoặc bằng 100")
     private Integer age;
 
     private ClassStatus status;
 
-    @Min(value = 1, message = "Id must be >= 1")
+    @Min(value = 1, message = "Id phải lớn hơn hoặc bằng 1")
     private Long teacherId;
 }

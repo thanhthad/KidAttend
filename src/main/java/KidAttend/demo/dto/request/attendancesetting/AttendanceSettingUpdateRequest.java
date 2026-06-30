@@ -12,6 +12,6 @@ public class AttendanceSettingUpdateRequest {
 
     private LocalTime endTime;
 
-    @Min(value = 0, message = "allowLateMinutes must be >= 0")
+    @Min(value = 0, message = "Số phút cho phép đi muộn phải lớn hơn hoặc bằng 0")
     private Integer allowLateMinutes;
 }

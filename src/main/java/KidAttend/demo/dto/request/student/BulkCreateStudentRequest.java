@@ -8,9 +8,9 @@ import java.util.List;
 @Data
 public class BulkCreateStudentRequest {
 
-    @NotNull(message = "ClassId is required")
+    @NotNull(message = "ClassId không được để trống")
     private Long classId;
 
-    @NotNull(message = "Student list is required")
+    @NotNull(message = "Danh sách học sinh không được để trống")
     private List<BulkStudentRequest> students;
 }

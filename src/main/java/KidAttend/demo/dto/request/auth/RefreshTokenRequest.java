@@ -7,7 +7,7 @@ import lombok.Data;
 @Data
 public class RefreshTokenRequest {
 
-    @NotBlank(message = "token is required")
-    @Size(min = 1, max = 1000, message = "Content max 1000 characters")
+    @NotBlank(message = "Refresh token không được để trống")
+    @Size(min = 1, max = 1000, message = "Refresh token không được vượt quá 1000 ký tự")
     private String refreshToken;
 }

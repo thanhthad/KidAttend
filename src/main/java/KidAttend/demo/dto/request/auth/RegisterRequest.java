@@ -1,6 +1,5 @@
 package KidAttend.demo.dto.request.auth;
 
-
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
@@ -11,20 +10,19 @@ import lombok.Setter;
 @Setter
 public class RegisterRequest {
 
-    @NotBlank(message = "Full name must not be blank")
+    @NotBlank(message = "Họ và tên không được để trống")
     @Size(
             min = 2,
             max = 100,
-            message = "Full name must be between 2 and 100 characters"
+            message = "Họ và tên phải từ 2 đến 100 ký tự"
     )
     private String fullName;
 
-    @Email(message = "Invalid email format")
-    @NotBlank(message = "Email is required")
+    @Email(message = "Email không đúng định dạng")
+    @NotBlank(message = "Email không được để trống")
     private String email;
 
-    @NotBlank(message = "Password is required")
-    @Size(min = 6, max = 100, message = "Password must be at least 6 characters")
+    @NotBlank(message = "Mật khẩu không được để trống")
+    @Size(min = 6, max = 100, message = "Mật khẩu phải có ít nhất 6 ký tự")
     private String password;
-
 }
