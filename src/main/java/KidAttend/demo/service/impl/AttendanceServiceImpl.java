@@ -52,8 +52,7 @@ public class AttendanceServiceImpl implements AttendanceService {
         Long userId = SecurityUtils.getCurrentUserId();
 
         Long classId = classRepository.findByTeacher_Id(userId)
-                .orElseThrow(() ->
-                        new ClassRoomNotFoundException("Giáo viên chưa được phân lớp"))
+                .orElseThrow(() -> new ClassRoomNotFoundException("Giáo viên chưa được phân lớp"))
                 .getId();
 
         LocalDate today = LocalDate.now();
@@ -66,37 +65,29 @@ public class AttendanceServiceImpl implements AttendanceService {
         List<Attendance> existing = attendanceRepository
                 .findByClassAndDate(classId, today);
 
-        Map<Long, Attendance> existingMap = existing.stream()
-                .collect(Collectors.toMap(
-                        a -> a.getStudent().getId(),
-                        Function.identity()
-                ));
-
-        List<Attendance> toSave = new ArrayList<>();
+        Set<Long> existingIds = existing.stream()
+                .map(a -> a.getStudent().getId())
+                .collect(Collectors.toSet());
 
         for (Student s : students) {
-            boolean exists = attendanceRepository
-                    .existsByStudent_IdAndAttendanceDate(s.getId(), today);
 
-            if (!exists) {
-                toSave.add(
-                        Attendance.builder()
-                                .student(s)
-                                .attendanceDate(today)
-                                .status("ABSENT")
-                                .note("")
-                                .createdBy(teacher)
-                                .build()
-                );
+            if (existingIds.contains(s.getId())) {
+                continue;
             }
+
+            attendanceRepository.insertIgnoreConflict(
+                    s.getId(),
+                    today,
+                    "ABSENT",
+                    "",
+                    teacher.getId()
+            );
         }
 
-        if (!toSave.isEmpty()) {
-            attendanceRepository.saveAll(toSave);
-            existing.addAll(toSave);
-        }
+        List<Attendance> result = attendanceRepository
+                .findByClassAndDate(classId, today);
 
-        return existing.stream()
+        return result.stream()
                 .map(a -> AttendanceResponse.builder()
                         .id(a.getId())
                         .studentId(a.getStudent().getId())
@@ -120,6 +111,15 @@ public class AttendanceServiceImpl implements AttendanceService {
         }
 
         LocalDate today = LocalDate.now();
+
+        AttendanceSetting setting = attendanceSettingRepository.findById(1L)
+                .orElseThrow(() -> new AttendanceSettingNotFoundException("Chưa cấu hình thời gian điểm danh"));
+
+        LocalTime now = LocalTime.now();
+
+        if (now.isAfter(setting.getEndTime())) {
+            throw new IllegalArgumentException("Đã hết thời gian điểm danh");
+        }
 
         List<Long> attendanceIds = requests.stream()
                 .map(UpdateAttendanceRequest::getAttendanceId)
@@ -188,7 +188,7 @@ public class AttendanceServiceImpl implements AttendanceService {
         }
 
         AttendanceSetting setting = attendanceSettingRepository.findById(1L)
-                .orElseThrow(() -> new RuntimeException("Chưa cấu hình thời gian điểm danh"));
+                .orElseThrow(() -> new AttendanceSettingNotFoundException("Chưa cấu hình thời gian điểm danh"));
 
         LocalTime now = LocalTime.now();
 

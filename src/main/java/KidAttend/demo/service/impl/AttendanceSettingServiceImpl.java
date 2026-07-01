@@ -4,6 +4,7 @@ import KidAttend.demo.dto.request.attendancesetting.AttendanceSettingUpdateReque
 import KidAttend.demo.dto.response.attendancesetting.AttendanceSettingResponse;
 import KidAttend.demo.entity.AttendanceSetting;
 import KidAttend.demo.exception.attendance.AttendanceNotFoundException;
+import KidAttend.demo.exception.attendancesetting.AttendanceSettingNotFoundException;
 import KidAttend.demo.repository.AttendanceSettingRepository;
 import KidAttend.demo.service.AttendanceSettingService;
 import jakarta.transaction.Transactional;
@@ -21,7 +22,7 @@ public class AttendanceSettingServiceImpl implements AttendanceSettingService {
     public AttendanceSettingResponse updateSetting(AttendanceSettingUpdateRequest request) {
 
         AttendanceSetting setting = repository.findById(1L)
-                .orElseThrow(() -> new AttendanceNotFoundException("Attendance setting not initialized"));
+                .orElseThrow(() -> new AttendanceNotFoundException("Chưa khởi tạo cấu hình điểm danh"));
 
         if (request.getStartTime() != null) {
             setting.setStartTime(request.getStartTime());
@@ -33,14 +34,14 @@ public class AttendanceSettingServiceImpl implements AttendanceSettingService {
 
         if (setting.getStartTime() != null && setting.getEndTime() != null) {
             if (!setting.getStartTime().isBefore(setting.getEndTime())) {
-                throw new IllegalArgumentException("startTime must be before endTime");
+                throw new IllegalArgumentException("Thời gian bắt đầu phải nhỏ hơn thời gian kết thúc");
             }
         }
 
         if (request.getAllowLateMinutes() != null) {
 
             if (request.getAllowLateMinutes() < 0) {
-                throw new IllegalArgumentException("allowLateMinutes must be >= 0");
+                throw new IllegalArgumentException("Số phút đi muộn không được nhỏ hơn 0");
             }
 
             setting.setAllowLateMinutes(request.getAllowLateMinutes());
@@ -52,6 +53,18 @@ public class AttendanceSettingServiceImpl implements AttendanceSettingService {
                 .startTime(saved.getStartTime())
                 .endTime(saved.getEndTime())
                 .allowLateMinutes(saved.getAllowLateMinutes())
+                .build();
+    }
+
+    @Override
+    public AttendanceSettingResponse getSetting() {
+        AttendanceSetting setting = repository.findById(1L)
+                .orElseThrow(() -> new AttendanceSettingNotFoundException("Chưa khởi tạo cấu hình điểm danh"));
+
+        return AttendanceSettingResponse.builder()
+                .startTime(setting.getStartTime())
+                .endTime(setting.getEndTime())
+                .allowLateMinutes(setting.getAllowLateMinutes())
                 .build();
     }
 }

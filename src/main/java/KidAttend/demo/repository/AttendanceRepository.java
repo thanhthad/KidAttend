@@ -6,8 +6,10 @@ import KidAttend.demo.repository.projection.*;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -15,6 +17,23 @@ import java.util.Optional;
 
 public interface AttendanceRepository extends JpaRepository<Attendance, Long> {
     boolean existsByCreatedById(Long userId);
+
+    Long countByStudent_Id(Long studentId);
+
+    @Modifying
+    @Transactional
+    @Query(value = """
+INSERT INTO attendance (student_id, attendance_date, status, note, created_by, created_at, updated_at)
+VALUES (:studentId, :date, :status, :note, :createdBy, NOW(), NOW())
+ON CONFLICT (student_id, attendance_date) DO NOTHING
+""", nativeQuery = true)
+    void insertIgnoreConflict(
+            @Param("studentId") Long studentId,
+            @Param("date") LocalDate date,
+            @Param("status") String status,
+            @Param("note") String note,
+            @Param("createdBy") Long createdBy
+    );
 
     @Query("""
     SELECT a

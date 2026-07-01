@@ -7,4 +7,6 @@ import KidAttend.demo.dto.response.attendancesetting.AttendanceSettingResponse;
 public interface AttendanceSettingService {
 
     AttendanceSettingResponse updateSetting(AttendanceSettingUpdateRequest request);
+
+    AttendanceSettingResponse getSetting();
 }

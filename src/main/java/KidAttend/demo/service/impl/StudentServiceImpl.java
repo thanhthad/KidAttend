@@ -7,10 +7,12 @@ import KidAttend.demo.dto.request.student.UpdateStudentRequest;
 import KidAttend.demo.dto.response.student.StudentResponse;
 import KidAttend.demo.entity.ClassEntity;
 import KidAttend.demo.entity.Student;
+import KidAttend.demo.exception.attendance.AttendanceAlreadyExistsException;
 import KidAttend.demo.exception.classroom.ClassRoomNotFoundException;
 import KidAttend.demo.exception.student.InvalidAgeException;
 import KidAttend.demo.exception.student.StudentAlreadyExistsException;
 import KidAttend.demo.exception.student.StudentNotFoundException;
+import KidAttend.demo.repository.AttendanceRepository;
 import KidAttend.demo.repository.ClassRepository;
 import KidAttend.demo.repository.StudentRepository;
 import KidAttend.demo.security.userdetails.SecurityUtils;
@@ -32,6 +34,7 @@ public class StudentServiceImpl implements StudentService {
 
     private final StudentRepository studentRepository;
     private final ClassRepository classRepository;
+    private final AttendanceRepository attendanceRepository;
 
     // ================= CREATE =================
     @Override
@@ -153,6 +156,9 @@ public class StudentServiceImpl implements StudentService {
     @Override
     public void delete(Long id) {
 
+        if(attendanceRepository.countByStudent_Id(id) > 0){
+            throw new AttendanceAlreadyExistsException("Học Sinh Này đang đang có dữ liệu điểm danh nên không thể xóa");
+        }
         Student student = getStudentById(id);
 
         studentRepository.delete(student);
