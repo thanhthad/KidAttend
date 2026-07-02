@@ -1,0 +1,41 @@
+version: "3.9"
+
+services:
+
+  postgres-db:
+    image: postgres:16
+    container_name: postgres-db
+
+    environment:
+      POSTGRES_DB: kidattend
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 123456
+
+    ports:
+      - "5432:5432"
+
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+    restart: unless-stopped
+
+  backend:
+    build: .
+
+    container_name: kidattend-container
+
+    ports:
+      - "8080:8080"
+
+    depends_on:
+      - postgres-db
+
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-db:5432/kidattend
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: 123456
+
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
